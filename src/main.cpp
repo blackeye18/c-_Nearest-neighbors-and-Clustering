@@ -41,7 +41,7 @@ int get_N_of_input(int* no_of_vectors,int* no_of_coordinates,char input_file[256
 }
 
 int main(int argc, char *argv[]){
-    char input_file[256],query_file[256],output_file[256];
+    char input_file[256],query_file[256],output_file[256],temp[256];
     int k,L,N,R;//allagi tou R se dekadiko arithmo
     int no_of_vectors,no_of_coordinates;
     int ret;
@@ -69,12 +69,66 @@ int main(int argc, char *argv[]){
         //printf("\n");
         printf("Type the path to the output_file: ");
         scanf("%s",output_file);
+
+        printf("Type the value of k or type d for default value(4) ");
+        scanf("%s",temp);
+        if(strcmp(temp,"d")==0)
+            k=4;
+        else{
+            if(isdigit(temp[0]))
+                k=atoi(temp);
+            else{
+                printf("You did not enter a number or d! I will not tolerate this! Exiting...\n");
+                return(1);
+            }
+        }
+        strcpy(temp,"");
+
+        printf("Type the value of L or type d for default value(5) ");
+        scanf("%s",temp);
+        if(strcmp(temp,"d")==0)
+            L=5;
+        else{
+            if(isdigit(temp[0]))
+                L=atoi(temp);
+            else{
+                printf("You did not enter a number or d! I will not tolerate this! Exiting...\n");
+                return(1);
+            }
+        }
+        strcpy(temp,"");
+        printf("Type the value of N or type d for default value(1) ");
+         scanf("%s",temp);
+        if(strcmp(temp,"d")==0)
+            N=1;
+        else{
+             if(isdigit(temp[0]))
+                N=atoi(temp);
+            else{
+                printf("You did not enter a number or d! I will not tolerate this! Exiting...\n");
+                return(1);
+            }
+        }
+        strcpy(temp,"");
+        printf("Type the value of R or type d for default value(10000) ");
+         scanf("%s",temp);
+        if(strcmp(temp,"d")==0)
+            R=10000;
+        else{
+             if(isdigit(temp[0]))
+                R=atoi(temp);
+            else{
+                printf("You did not enter a number or d! I will not tolerate this! Exiting...\n");
+                return(1);
+            }
+        }
+        strcpy(temp,"");
         //printf("\n");
     }
     printf("input_file: %s, query_file: %s, output_file: %s,k:%d,L:%d,N:%d,R:%d\n",input_file,query_file,output_file,k,L,N,R);
     ret=get_N_of_input(&no_of_vectors,&no_of_coordinates,input_file);
     if(ret==-1){
-        printf("Something terrible happened while opening the file... Exiting...");
+        printf("Something terrible happened while opening the file... Exiting...\n");
         return -1;
     }
     printf("no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
