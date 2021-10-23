@@ -13,6 +13,9 @@ public:
     vector <int> coord;
 };
 
+
+
+
 //elegxoume an to # twn arguments einai swsto
 int argsOK(int argc, char *argv[])
 {
@@ -109,7 +112,7 @@ int input_handler(int argc, char *argv[],int* k, int* L, int* N,int* R,char (&in
     return 0;
 }
 
-
+/*
 //diavazei to plithos dianismatwn kai to plithos twn syntetagmenwn tous
 int get_N_of_input(int* no_of_vectors,int* no_of_coordinates,char input_file[256]){
     //printf("input_file: %s",input_file);
@@ -202,14 +205,19 @@ void create_vectors(vec* nvectors,int no_of_vectors,char input_file[256],int no_
 
 
 }
-
+*/
 
 vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no_of_vectors){
-    cout<<"aaa1";
+    //cout<<"aaa1";
     int counter=0;
     int flag=0;
     ifstream input;
     input.open(input_file);
+    if(!input){
+        cout<<"Something Terrible Happened! Maybe the input_file doesn't exist?! Exiting.."<<endl;
+        return NULL;
+    }
+
     string sline;
     string tok;
 
@@ -231,6 +239,10 @@ vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no
     input.close();
     input.clear();
     input.open(input_file);
+    if(!input){
+        cout<<"Something Terrible Happened! Maybe the input_file doesn't exist?! Exiting.."<<endl;
+        return NULL;
+    }
     vec* nvectors;
     nvectors = new vec[(*no_of_vectors)];
     while (getline(input,sline))
@@ -238,7 +250,7 @@ vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no
             stringstream line(sline);
             while(line>> tok) {
                 if(flag==0){
-                    cout<<"TOK:"<<tok<<endl;
+                    //cout<<"TOK:"<<tok<<endl;
                     nvectors[counter].name=tok;
                     flag=1;
                 }
@@ -251,6 +263,8 @@ vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no
     return nvectors;
             
 }
+
+
 
 int main(int argc, char *argv[]){
     char input_file[256],query_file[256],output_file[256],temp[256];
@@ -273,6 +287,8 @@ int main(int argc, char *argv[]){
     vec* nvectors;
 
     nvectors=open_and_create_vectors(input_file,&no_of_coordinates,&no_of_vectors);
+    if(nvectors==NULL)
+        return -1;
     printf("no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
 
 
@@ -280,6 +296,7 @@ int main(int argc, char *argv[]){
   // create_vectors(vector,no_of_vectors,input_file,no_of_coordinates);
     int j;
     //cout.flush();
+    /*
     for(int i=0;i<no_of_vectors;i++){
         cout<<"Dianisma :"<<i<<endl;
         for(j=0;j<no_of_coordinates;j++){
@@ -291,6 +308,8 @@ int main(int argc, char *argv[]){
             cout<<nvectors[i].coord[j]<<" ";
         }
     }
-    
+
+*/
+   delete [] nvectors;
 		
 }
