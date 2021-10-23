@@ -7,6 +7,7 @@
 #include <random>
 #include <chrono>
 #include <map>
+#include <cassert>
 
 using namespace std;
 
@@ -38,35 +39,38 @@ class node
     public:
         long long hashvalue;
         int id;
-        vec* vect;
-        node* next;
-        ~node(void);
+        vec* vect=NULL;
+        node* next=NULL;
+        //~node(void);
     };
+    /*
 node::~node()
     {
-    if(vect!=NULL)
-        {
-        delete vect;
-        vect=NULL;
-        }
+    //if(vect!=NULL)
+      //  {
+        //delete vect;
+        //vect=NULL;
+        //}
     if(next!=NULL)
         {
         delete next;
         next=NULL;
         }
     }
+    */
 
 class hashtable
     {
     protected:
-        node* buckets;//array me ta buckets
+        node* buckets=NULL;//array me ta buckets
         int bucket_count;//ari8mos buckets
         int total_nodes;
         int initialized;
     public:
         hashtable(void); // plithos bucket
         void hashtable_init(int);
-        int hashtable_insert(vec* , long long );//eisagwgh 
+        int hashtable_insert(vec* ,long );//eisagwgh 
+        void hashtable_print();
         ~hashtable(void);
     };
 
@@ -82,7 +86,7 @@ void hashtable::hashtable_init(int bnum)
     initialized=1;
     }
 
-int hashtable:: hashtable_insert(vec* nvec, long long hvalue)
+int hashtable:: hashtable_insert(vec* nvec, long hvalue)
     {
     if(not initialized){return 1;}
     total_nodes++;
@@ -106,15 +110,58 @@ int hashtable:: hashtable_insert(vec* nvec, long long hvalue)
     return 0;
     }
 
+
+void hashtable::hashtable_print()
+    {
+    cout<<"total_nodes of htable "<<total_nodes;
+    int j=0;
+    for (int i = 0; i < bucket_count; ++i)
+        {
+        cout<<endl<<"bucket "<<i;
+        node currnode=buckets[i];
+        if(currnode.vect!=NULL)
+            {
+            cout<<" node "<<j<<" "<<currnode.vect->name<<" ";
+            j++;
+            node* currnodeptr=currnode.next;
+            while(currnodeptr!=NULL)
+                {
+                cout<<" node "<<j<<" "<<currnodeptr->vect->name;
+                currnodeptr=currnodeptr->next;
+                j++;
+                }
+            }
+        }
+        
+    }
+
+
+
 hashtable::~hashtable()
     {
-    delete[] buckets;
+    if(buckets!=NULL)
+        {
+        for (int i = 0; i < bucket_count; ++i)
+            {
+            node* currnd=buckets[i].next;
+            while(currnd!=NULL)
+                {
+                node* temp=currnd;
+                currnd=temp->next;
+                delete temp;
+                }
+
+            }
+        delete[] buckets;
+
+        }
     buckets=NULL;
     }
+
 class Lhashtables
     {
     protected:
-        hashtable* Lhtables;//array me ta hashtables
+        hashtable* Lhtables=NULL;//array me ta hashtables
         int L;//number of hashtables;
         int d;//dimensions
         int k;
@@ -126,9 +173,13 @@ class Lhashtables
         void Hashfun_init(void);
         int lsh_start(int,vec*);
         int lsh_continue(int,int,vec*);
-        //~Lhashtables(void);
+        ~Lhashtables(void);
 
     };
+
+Lhashtables:: ~Lhashtables(void){
+    delete[] Lhtables;
+}
 
 Lhashtables::Lhashtables(int lh,int di,int ki)
     {
@@ -137,6 +188,7 @@ Lhashtables::Lhashtables(int lh,int di,int ki)
     d=di;
     k=ki;
     }
+
 void Lhashtables::Hashfun_init(void)        
     {
     v.resize(L,vector<vector<double> >(k,vector<double>(d)));
@@ -169,7 +221,7 @@ void Lhashtables::Hashfun_init(void)
 
     }
 
-int h_function(vector<int> p,vector<double> v,double t,int d){
+int h_function(vector<int> p,vector<double> v,double t){
     double in_prod;
     in_prod=inner_product(p.begin(),p.end(),v.begin(),0);
     in_prod+=t;
@@ -178,17 +230,48 @@ int h_function(vector<int> p,vector<double> v,double t,int d){
     return h;
 
 }
+//https://stackoverflow.com/questions/11714555/euclidean-integer-modulo-in-c
+long int euclidean_remainder(long int a,long int b)
+{
+  assert(b != 0);
+  long int r = a % b;
+  return r >= 0 ? r : r + abs(b);
+}
+
+long int g_function(int h[],vector<int> r,int k){
+    long int galmost=0;
+    long int count_holder=0;
+    for(int i=0;i<k;i++){
+        count_holder=0;
+        count_holder+=euclidean_remainder(r[i],PNUM);
+        count_holder=count_holder*euclidean_remainder(h[i],PNUM);
+        count_holder=euclidean_remainder(count_holder,PNUM);
+        galmost+=count_holder;
+    }
+    galmost=euclidean_remainder(galmost,PNUM);
+    return galmost;
+}
+
 int Lhashtables:: lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors){
     int h_return;
     int h[this->k];
+    int tablesize=this->d/4;//apo diafaneies
+    this->Lhtables[no_of_ht].hashtable_init(tablesize);
+    long int g_notablesize;
     for(int i=0;i<no_of_vectors;i++){
         for(int ki=0;ki<this->k;ki++){
 
-            h_return=h_function(nvectors[i].coord,this->v[no_of_ht][ki],this->t[no_of_ht][ki],this->d);
+            h_return=h_function(nvectors[i].coord,this->v[no_of_ht][ki],this->t[no_of_ht][ki]);
             h[ki]=h_return;
             cout<<"H Function Return:"<<h[ki]<<endl;
         }
+        cout<<"calling g function"<<endl;
+        g_notablesize=g_function(h,this->r[no_of_ht],this->k);
+        cout<<"Inserting to HT"<<endl;
+        this->Lhtables[no_of_ht].hashtable_insert(&(nvectors[i]),g_notablesize);
     }
+    
+
     return 0;
 }
 
@@ -203,7 +286,12 @@ int Lhashtables:: lsh_start(int no_of_vectors,vec *nvectors){
         }
 
     }
-
+    cout<<endl<<endl<<endl<<"PRINTING HASHTABLES:"<<endl;
+    for(int i=0;i<L;i++){
+        cout<<"hashtable "<<i<<endl;
+        this->Lhtables[i].hashtable_print();
+        cout<<endl<<endl;
+    }
 
     return 0;
 
