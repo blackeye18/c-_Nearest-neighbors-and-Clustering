@@ -8,13 +8,21 @@
 #include <chrono>
 #include <map>
 #include <cassert>
+#include <chrono>
+#include <queue>
 
 using namespace std;
+using namespace std::chrono;
 
 #define RLIMIT 100
 #define PNUM 4294967291
 #define W 4//meta3i 0 kai 6
 
+double normal_dist_generator(void);
+long int euclidean_remainder(long int a,long int b);
+int h_function(vector<int> p,vector<double> v,double t);
+long int g_function(int h[],vector<int> r,int k);
+long double vect_dist(vector<int> vecA,vector<int> vecB,int d);//euclydian apostasi meta3i  2 vectors
 
 class vec
 {
@@ -22,6 +30,48 @@ public:
     string name;//to id ths grammhs-dianismatos
     vector <int> coord;
 };
+/*
+struct LinkedList{
+    int dist;
+    vec* vect=NULL;
+    LinkedList *next=NULL;
+};
+
+ insert_in_list(LinkedList*head,int dist,vec* vect){
+    LinkedList* newnode= new LinkedList;
+    LinkedList * currnode=head;
+    newnode->dist=dist;
+    newnode->vec=vect;
+    newnode->next=NULL;
+
+    if(head==NULL){
+        head=newnode;
+        return;}
+    while(currnode->next!=NULL){
+        currnode=currnode->next;
+    }
+    currnode->next=newnode;
+    return;
+}
+
+*/
+
+class dist_vec
+    {public:
+    long double dist;
+    vec* vect;
+    dist_vec(long double dist, vec* vect)
+       : dist(dist), vect(vect)
+        {};
+    };
+
+struct pqcompare
+    {
+    bool operator()(dist_vec const& NN1, dist_vec const& NN2)
+        {
+        return NN1.dist > NN2.dist;
+        }
+    };
 
 
 double normal_dist_generator(void)
@@ -62,7 +112,7 @@ node::~node()
 class hashtable
     {
     protected:
-        node* buckets=NULL;//array me ta buckets
+        node** buckets=NULL;//array me ta buckets
         int bucket_count;//ari8mos buckets
         int total_nodes;
         int initialized;
@@ -71,6 +121,7 @@ class hashtable
         void hashtable_init(int);
         int hashtable_insert(vec* ,long );//eisagwgh 
         void hashtable_print();
+        node* search_nd(long);
         ~hashtable(void);
     };
 
@@ -80,7 +131,9 @@ hashtable::hashtable()
     }
 void hashtable::hashtable_init(int bnum)
     {
-    buckets= new node[bnum];
+    buckets=(node**) malloc(bnum*sizeof(node*));
+    for(int i=0;i<bnum;i++)
+        buckets[i]=NULL;
     bucket_count=bnum;
     total_nodes=0;
     initialized=1;
@@ -91,12 +144,13 @@ int hashtable:: hashtable_insert(vec* nvec, long hvalue)
     if(not initialized){return 1;}
     total_nodes++;
     int id=hvalue % bucket_count;
-    if (buckets[id].vect==NULL)
+    if (buckets[id]==NULL)
         {
-        buckets[id].hashvalue=hvalue;
-        buckets[id].id=id;
-        buckets[id].vect=nvec;
-        buckets[id].next=NULL;
+        buckets[id]=new node;
+        buckets[id]->hashvalue=hvalue;
+        buckets[id]->id=id;
+        buckets[id]->vect=nvec;
+        buckets[id]->next=NULL;
         }
     else
         {
@@ -104,8 +158,8 @@ int hashtable:: hashtable_insert(vec* nvec, long hvalue)
         tempn->hashvalue=hvalue;
         tempn->id=id;
         tempn->vect=nvec;
-        tempn->next=buckets[id].next;
-        buckets[id].next=tempn;
+        tempn->next=buckets[id]->next;
+        buckets[id]->next=tempn;
         }
     return 0;
     }
@@ -118,23 +172,29 @@ void hashtable::hashtable_print()
     for (int i = 0; i < bucket_count; ++i)
         {
         cout<<endl<<"bucket "<<i;
-        node currnode=buckets[i];
-        if(currnode.vect!=NULL)
+
+        node* currnodeptr=buckets[i];
+
+        while(currnodeptr!=NULL)
             {
-            cout<<" node "<<j<<" "<<currnode.vect->name<<" ";
+            cout<<" node "<<j<<" "<<currnodeptr->vect->name<<endl;
+            cout<<"cord "<<currnodeptr->vect->coord[0];
+            currnodeptr=currnodeptr->next;
             j++;
-            node* currnodeptr=currnode.next;
-            while(currnodeptr!=NULL)
-                {
-                cout<<" node "<<j<<" "<<currnodeptr->vect->name;
-                currnodeptr=currnodeptr->next;
-                j++;
-                }
             }
         }
-        
+                 
     }
-
+node* hashtable::search_nd(long hvalue)
+    {
+    int id=hvalue%bucket_count;
+    if(buckets!=NULL)
+        {
+        if(buckets[id]!=NULL)
+            return buckets[id];
+        }
+    return NULL;
+    }
 
 
 hashtable::~hashtable()
@@ -143,7 +203,7 @@ hashtable::~hashtable()
         {
         for (int i = 0; i < bucket_count; ++i)
             {
-            node* currnd=buckets[i].next;
+            node* currnd=buckets[i];
             while(currnd!=NULL)
                 {
                 node* temp=currnd;
@@ -152,7 +212,7 @@ hashtable::~hashtable()
                 }
 
             }
-        delete[] buckets;
+        free(buckets);
 
         }
     buckets=NULL;
@@ -173,6 +233,8 @@ class Lhashtables
         void Hashfun_init(void);
         int lsh_start(int,vec*);
         int lsh_continue(int,int,vec*);
+        vector<dist_vec>& NN_search(vec*,int);
+        vector<dist_vec>* find_k_nearest(vec* ,int ,int );
         ~Lhashtables(void);
 
     };
@@ -263,11 +325,11 @@ int Lhashtables:: lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors){
 
             h_return=h_function(nvectors[i].coord,this->v[no_of_ht][ki],this->t[no_of_ht][ki]);
             h[ki]=h_return;
-            cout<<"H Function Return:"<<h[ki]<<endl;
+            //cout<<"H Function Return:"<<h[ki]<<endl;
         }
-        cout<<"calling g function"<<endl;
+        //cout<<"calling g function"<<endl;
         g_notablesize=g_function(h,this->r[no_of_ht],this->k);
-        cout<<"Inserting to HT"<<endl;
+        //cout<<"Inserting to HT"<<endl;
         this->Lhtables[no_of_ht].hashtable_insert(&(nvectors[i]),g_notablesize);
     }
     
@@ -286,13 +348,14 @@ int Lhashtables:: lsh_start(int no_of_vectors,vec *nvectors){
         }
 
     }
+    /*
     cout<<endl<<endl<<endl<<"PRINTING HASHTABLES:"<<endl;
     for(int i=0;i<L;i++){
         cout<<"hashtable "<<i<<endl;
         this->Lhtables[i].hashtable_print();
         cout<<endl<<endl;
     }
-
+*/
     return 0;
 
 }
@@ -470,25 +533,176 @@ void print_vectors(vec *nvectors,int no_of_vectors,int no_of_coordinates){
 
 
 
+long double vect_dist(vector<int> vecA,vector<int> vecB,int d)
+    {
+    long int sum=0;
+    for (int i = 0; i < d; ++i)
+        {
+        long int temp=abs(vecA[i]-vecB[i]);
+        sum+=temp*temp;
+        }
+    return sqrt(sum);
+    }
+
+long double brute_calculate(vector<int> qpoint,vec* nvectors,int no_of_vectors,int no_of_coordinates){
+    long double dist;
+    for(int i=0;i<no_of_vectors;i++){
+        dist=vect_dist(qpoint,nvectors[i].coord,no_of_coordinates);
+        //cout<<dist<<endl;
+    }
+    return dist;//afto thelei ftiaksimo, einai h klash gewrgiou
+}
+
+int brute_calculate_all(vec* qvectors,vec* nvectors,int no_of_vectors,int no_of_coordinates,int queries_no_of_vectors){
+    auto start = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+    for(int i=0;i<queries_no_of_vectors;i++){
+        brute_calculate(qvectors[i].coord,nvectors,no_of_vectors,no_of_coordinates);
+    }
+
+
+    auto stop = high_resolution_clock::now();
+
+    auto duration = duration_cast<microseconds>(stop - start);
+    cout<<"Time taken to brute_calculate_all:"<<(duration.count()/1000000)<<" seconds"<<endl;
+    return 0;
+
+}
+
+vector<dist_vec>& Lhashtables::NN_search(vec* nvector,int N)
+    {
+        int counter=0;
+    int element_count=0;
+    priority_queue<dist_vec, vector<dist_vec>, pqcompare> Q;
+    //int g_notablesize=0;
+    long int g_notablesize[this->L];
+    int h_return;
+    int h[k];
+
+    for (int li = 0; li < L; li++)
+        {
+        for(int ki=0;ki<this->k;ki++)
+            {
+
+            h_return=h_function(nvector->coord,this->v[li][ki],this->t[li][ki]);
+            h[ki]=h_return;
+            //cout<<"H Function Return:"<<h[ki]<<endl;
+            }
+        //cout<<"calling g function"<<endl;
+        g_notablesize[li]=g_function(h,this->r[li],this->k);
+
+        node* currnode=Lhtables[li].search_nd(g_notablesize[li]);
+
+        while(currnode!=NULL)
+            {
+            if(currnode->vect==NULL){break;}
+            //if(currnode->hashvalue==NULL){break;}
+            if(currnode->hashvalue == g_notablesize[li])
+                {
+                    counter++;
+                long int dist=vect_dist(nvector->coord,currnode->vect->coord,d);
+                Q.push(dist_vec(dist,currnode->vect));
+                }
+            currnode=currnode->next;    
+            }
+
+        }
+    if(counter<N){
+        for(int li=0;li<L;li++){
+            node* currnode=Lhtables[li].search_nd(g_notablesize[li]);
+
+            while(currnode!=NULL)
+                {
+                if(currnode->vect==NULL){break;}
+                //if(currnode->hashvalue==NULL){break;}
+                if(currnode->hashvalue != g_notablesize[li])
+                    {
+                        counter++;
+                    long int dist=vect_dist(nvector->coord,currnode->vect->coord,d);
+                    Q.push(dist_vec(dist,currnode->vect));
+                    }
+                currnode=currnode->next;    
+                }
+
+        }
+    }
+    
+    vector<dist_vec>* dsvec=new vector<dist_vec>;//=new vector<dist_vec>;
+    
+    for (int i = 0; i < N; ++i)
+        {
+        if(!Q.empty())
+            {
+            dist_vec* tempdv=new dist_vec(Q.top().dist,Q.top().vect);
+            dsvec->push_back(*tempdv);
+            Q.pop();
+            }
+        else
+            break;
+        }
+        
+    return *dsvec;      
+    }
+
+
+vector<dist_vec>* Lhashtables:: find_k_nearest(vec* qvectors,int N,int queries_no_of_vectors){
+    vector<dist_vec> dsvec;
+    vector<dist_vec>* dsvec2;
+    dsvec2=new vector<dist_vec>[queries_no_of_vectors];
+    for(int i=0;i<queries_no_of_vectors;i++){
+        dsvec2[i]=NN_search(&(qvectors[i]),N);
+        for(int j=0;j<dsvec2[i].size();j++ )
+            if(dsvec2[i][j].vect!=NULL)
+            cout<<"For query:"<<i<<"vec id "<<dsvec2[i][j].vect->name<<"dist "<<dsvec2[i][j].dist<<endl;
+
+
+    }
+    
+    return dsvec2;
+
+}
+
+int print_to_file(char output_file[256],string lsh_or_hypercube){
+    ofstream outfile;
+    outfile.open(output_file);
+    //for every query
+    outfile<<"Query: ";
+    //outfile<<queryid;
+    outfile<<endl;
+    outfile<<"Nearest neighbour-";
+    //outfile<<i+1<<": ";
+    outfile<<lsh_or_hypercube;
+    //outfile<<distancemetrhkhs
+    outfile<<endl;
+    outfile<<"distanceTrue: ";
+    //outfile<<distancetru
+    //telos ths for
+    outfile<<"tLSH: ";
+    //outfile<<xronoslsh
+    outfile<<endl;
+    outfile<<"tTrue: ";
+    //outfile<<xronostrue
+    outfile<<endl;
+    outfile<<"R-near neighbours:"<<endl;//den kserw an thelei R h thelei to noumero tou R
+
+
+
+    return 0;
+}
+
+
+
 
 int main(int argc, char *argv[]){
     char input_file[256],query_file[256],output_file[256],temp[256];
     int k,L,N,R;//allagi tou R se dekadiko arithmo
     int no_of_vectors,no_of_coordinates;
+    int queries_no_of_vectors,queries_no_of_coordinates;
     int ret;
-
+    string lsh_or_hypercube="distanceLSH: ";
 	if(input_handler(argc,argv,&k,&L,&N,&R,(input_file), query_file, output_file))
         return -1;
 
     printf("input_file: %s, query_file: %s, output_file: %s,k:%d,L:%d,N:%d,R:%d\n",input_file,query_file,output_file,k,L,N,R);
-
-/*
-    ret=get_N_of_input(&no_of_vectors,&no_of_coordinates,input_file);
-    if(ret==-1){
-        printf("Something terrible happened while opening the file... Exiting...\n");
-        return -1;
-    }
-    printf("no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);*/
     vec* nvectors;
 
     nvectors=open_and_create_vectors(input_file,&no_of_coordinates,&no_of_vectors);
@@ -499,8 +713,35 @@ int main(int argc, char *argv[]){
     Lhashtables lht(L,no_of_coordinates,k);
     lht.lsh_start(no_of_vectors,nvectors);
    
-cout<<"den krasaraaaa"<<endl;
+    vec* qvectors;
+    qvectors=open_and_create_vectors(query_file,&queries_no_of_coordinates,&queries_no_of_vectors);  
+    printf("Queries:: queries_no_of_vectors: %d, queries_no_of_coordinates: %d\n",queries_no_of_vectors,queries_no_of_coordinates);
+    
+    //brute_calculate(qvectors[0].coord,nvectors,no_of_vectors,no_of_coordinates);
+    brute_calculate_all(qvectors,nvectors,no_of_vectors,no_of_coordinates,queries_no_of_vectors);
 
+    vector<dist_vec>* dsvec2;
+
+    dsvec2=lht.find_k_nearest(qvectors,N,queries_no_of_vectors);
+    for(int i=0;i<queries_no_of_vectors;i++)
+    for(int j=0;j<dsvec2[i].size();j++ )
+            if(dsvec2[i][j].vect!=NULL)
+            cout<<"For query:"<<i<<"vec id "<<dsvec2[i][j].vect->name<<"dist "<<dsvec2[i][j].dist<<endl;
+
+    cout<<"den krasaraaaa"<<endl;
+/*
+    for (int i = 0; i < queries_no_of_vectors; ++i)
+        {
+        for (int j = 0; j < dsvec2[i].size(); ++j)
+            {
+            delete &dsvec2[i][j];
+            }
+        delete &dsvec2[i];
+        }
+    delete [] dsvec2;
+
+*/
    delete [] nvectors;
+   delete [] qvectors;
 		
 }
