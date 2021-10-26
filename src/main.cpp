@@ -14,7 +14,7 @@
 using namespace std;
 using namespace std::chrono;
 
-#define RLIMIT 100
+#define RLIMIT 1000
 #define PNUM 4294967291
 #define W 4//meta3i 0 kai 6
 
@@ -235,6 +235,8 @@ class Lhashtables
         int lsh_continue(int,int,vec*);
         vector<dist_vec>& NN_search(vec*,int);
         vector<dist_vec>* find_k_nearest(vec* ,int ,int );
+        vector<dist_vec>& LRadius_search(vec* ,int );
+        vector<dist_vec>* find_in_LRadius(vec* ,int ,int );
         ~Lhashtables(void);
 
     };
@@ -535,36 +537,53 @@ void print_vectors(vec *nvectors,int no_of_vectors,int no_of_coordinates){
 
 long double vect_dist(vector<int> vecA,vector<int> vecB,int d)
     {
-    long int sum=0;
+    long double sum=0;
     for (int i = 0; i < d; ++i)
         {
-        long int temp=abs(vecA[i]-vecB[i]);
+        long double temp=abs(vecA[i]-vecB[i]);
         sum+=temp*temp;
         }
     return sqrt(sum);
     }
 
-long double brute_calculate(vector<int> qpoint,vec* nvectors,int no_of_vectors,int no_of_coordinates){
+vector<dist_vec>& brute_calculate(vec* qvector,vec* nvectors,int no_of_vectors,int no_of_coordinates,int N,int pos){
     long double dist;
+    priority_queue<dist_vec, vector<dist_vec>, pqcompare> Q;
     for(int i=0;i<no_of_vectors;i++){
-        dist=vect_dist(qpoint,nvectors[i].coord,no_of_coordinates);
+        dist=vect_dist(qvector[pos].coord,nvectors[i].coord,no_of_coordinates);
+        Q.push(dist_vec(dist,&(nvectors[i])));
         //cout<<dist<<endl;
     }
-    return dist;//afto thelei ftiaksimo, einai h klash gewrgiou
+
+     vector<dist_vec>* dsvec=new vector<dist_vec>;//=new vector<dist_vec>;
+    
+    for (int i = 0; i < N; ++i)
+        {
+        if(!Q.empty())
+            {
+            dist_vec tempdv(Q.top().dist,Q.top().vect);
+            dsvec->push_back(tempdv);
+            Q.pop();
+            }
+        else
+            break;
+        }
+        
+    return *dsvec;      
+    
 }
 
-int brute_calculate_all(vec* qvectors,vec* nvectors,int no_of_vectors,int no_of_coordinates,int queries_no_of_vectors){
-    auto start = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+vector<dist_vec>* brute_calculate_all(vec* qvectors,vec* nvectors,int no_of_vectors,int no_of_coordinates,int queries_no_of_vectors,int N){
+    vector<dist_vec>* dsvec2;
+    dsvec2=new vector<dist_vec>[queries_no_of_vectors];
     for(int i=0;i<queries_no_of_vectors;i++){
-        brute_calculate(qvectors[i].coord,nvectors,no_of_vectors,no_of_coordinates);
+        dsvec2[i]=brute_calculate(qvectors,nvectors,no_of_vectors,no_of_coordinates,N,i);
     }
 
-
-    auto stop = high_resolution_clock::now();
-
-    auto duration = duration_cast<microseconds>(stop - start);
-    cout<<"Time taken to brute_calculate_all:"<<(duration.count()/1000000)<<" seconds"<<endl;
-    return 0;
+   
+    
+   // cout<<"Time taken to brute_calculate_all:"<<<<" seconds"<<endl;
+    return dsvec2;
 
 }
 
@@ -599,7 +618,7 @@ vector<dist_vec>& Lhashtables::NN_search(vec* nvector,int N)
             if(currnode->hashvalue == g_notablesize[li])
                 {
                     counter++;
-                long int dist=vect_dist(nvector->coord,currnode->vect->coord,d);
+                long double dist=vect_dist(nvector->coord,currnode->vect->coord,d);
                 Q.push(dist_vec(dist,currnode->vect));
                 }
             currnode=currnode->next;    
@@ -617,7 +636,7 @@ vector<dist_vec>& Lhashtables::NN_search(vec* nvector,int N)
                 if(currnode->hashvalue != g_notablesize[li])
                     {
                         counter++;
-                    long int dist=vect_dist(nvector->coord,currnode->vect->coord,d);
+                    long double dist=vect_dist(nvector->coord,currnode->vect->coord,d);
                     Q.push(dist_vec(dist,currnode->vect));
                     }
                 currnode=currnode->next;    
@@ -632,8 +651,8 @@ vector<dist_vec>& Lhashtables::NN_search(vec* nvector,int N)
         {
         if(!Q.empty())
             {
-            dist_vec* tempdv=new dist_vec(Q.top().dist,Q.top().vect);
-            dsvec->push_back(*tempdv);
+            dist_vec tempdv(Q.top().dist,Q.top().vect);
+            dsvec->push_back(tempdv);
             Q.pop();
             }
         else
@@ -645,14 +664,89 @@ vector<dist_vec>& Lhashtables::NN_search(vec* nvector,int N)
 
 
 vector<dist_vec>* Lhashtables:: find_k_nearest(vec* qvectors,int N,int queries_no_of_vectors){
-    vector<dist_vec> dsvec;
+    //vector<dist_vec> dsvec;
     vector<dist_vec>* dsvec2;
     dsvec2=new vector<dist_vec>[queries_no_of_vectors];
     for(int i=0;i<queries_no_of_vectors;i++){
         dsvec2[i]=NN_search(&(qvectors[i]),N);
+        /*
         for(int j=0;j<dsvec2[i].size();j++ )
             if(dsvec2[i][j].vect!=NULL)
             cout<<"For query:"<<i<<"vec id "<<dsvec2[i][j].vect->name<<"dist "<<dsvec2[i][j].dist<<endl;
+        */
+
+    }
+    
+    return dsvec2;
+
+}
+
+vector<dist_vec>& Lhashtables::LRadius_search(vec* nvector,int R)
+    {
+        int counter=0;
+    int element_count=0;
+    priority_queue<dist_vec, vector<dist_vec>, pqcompare> Q;
+    //int g_notablesize=0;
+    long int g_notablesize[this->L];
+    int h_return;
+    int h[k];
+
+    for (int li = 0; li < L; li++)
+        {
+        for(int ki=0;ki<this->k;ki++)
+            {
+
+            h_return=h_function(nvector->coord,this->v[li][ki],this->t[li][ki]);
+            h[ki]=h_return;
+            //cout<<"H Function Return:"<<h[ki]<<endl;
+            }
+        //cout<<"calling g function"<<endl;
+        g_notablesize[li]=g_function(h,this->r[li],this->k);
+
+        node* currnode=Lhtables[li].search_nd(g_notablesize[li]);
+
+        while(currnode!=NULL)
+            {
+            if(currnode->vect==NULL){
+                break;
+            }
+            counter++;
+            long double dist=vect_dist(nvector->coord,currnode->vect->coord,d);
+            if(dist<R)
+                Q.push(dist_vec(dist,currnode->vect));
+            currnode=currnode->next;    
+            }
+
+        }
+    
+    vector<dist_vec>* dsvec=new vector<dist_vec>;//=new vector<dist_vec>;
+    
+    
+        while(!Q.empty())
+            {
+            dist_vec tempdv(Q.top().dist,Q.top().vect);
+            dsvec->push_back(tempdv);
+            Q.pop();
+            }
+        
+        
+    return *dsvec;      
+    }
+
+
+
+
+vector<dist_vec>* Lhashtables:: find_in_LRadius(vec* qvectors,int R,int queries_no_of_vectors){
+    //vector<dist_vec> dsvec;
+    vector<dist_vec>* dsvec2;
+    dsvec2=new vector<dist_vec>[queries_no_of_vectors];
+    for(int i=0;i<queries_no_of_vectors;i++){
+        dsvec2[i]=LRadius_search(&(qvectors[i]),R);
+        /*
+        for(int j=0;j<dsvec2[i].size();j++ )
+            if(dsvec2[i][j].vect!=NULL)
+            cout<<"For query:"<<i<<"vec id "<<dsvec2[i][j].vect->name<<"dist "<<dsvec2[i][j].dist<<endl;
+        */
 
 
     }
@@ -661,30 +755,33 @@ vector<dist_vec>* Lhashtables:: find_k_nearest(vec* qvectors,int N,int queries_n
 
 }
 
-int print_to_file(char output_file[256],string lsh_or_hypercube){
+
+int print_to_file(char output_file[256],string lsh_or_hypercube,vector<dist_vec>* dsvec2,int queries_no_of_vectors,vec* qvectors,double time_lsh,double time_true,vector<dist_vec>* dsvec3,vector<dist_vec>* dsvec4){
     ofstream outfile;
     outfile.open(output_file);
     //for every query
-    outfile<<"Query: ";
-    //outfile<<queryid;
-    outfile<<endl;
-    outfile<<"Nearest neighbour-";
-    //outfile<<i+1<<": ";
-    outfile<<lsh_or_hypercube;
-    //outfile<<distancemetrhkhs
-    outfile<<endl;
-    outfile<<"distanceTrue: ";
-    //outfile<<distancetru
-    //telos ths for
-    outfile<<"tLSH: ";
-    //outfile<<xronoslsh
-    outfile<<endl;
-    outfile<<"tTrue: ";
-    //outfile<<xronostrue
-    outfile<<endl;
-    outfile<<"R-near neighbours:"<<endl;//den kserw an thelei R h thelei to noumero tou R
-
-
+    //cout<<"EFTASA EDW!!"<<endl;
+    for(int i=0;i<queries_no_of_vectors;i++){
+        outfile<<"Query: ";
+        outfile<<qvectors[i].name;
+        outfile<<endl;
+        for(int j=0;j<dsvec2[i].size();j++){
+            outfile<<"Nearest neighbour-";
+            outfile<<j+1<<": "<<dsvec2[i][j].vect->name<<endl;
+            outfile<<lsh_or_hypercube;
+            outfile<<dsvec2[i][j].dist<<endl;
+            outfile<<"distanceTrue: "<<dsvec3[i][j].dist<<endl;
+        }
+        
+    
+        outfile<<"tLSH: ";
+        outfile<<time_lsh<<endl;
+        outfile<<"tTrue: "<<time_true<<endl;
+        outfile<<"R-near neighbours:"<<endl;//den kserw an thelei R h thelei to noumero tou R
+        for(int r=0;r<dsvec4[i].size();r++)
+            outfile<<dsvec4[i][r].vect->name<<endl;
+    }
+    outfile.close();
 
     return 0;
 }
@@ -703,30 +800,49 @@ int main(int argc, char *argv[]){
         return -1;
 
     printf("input_file: %s, query_file: %s, output_file: %s,k:%d,L:%d,N:%d,R:%d\n",input_file,query_file,output_file,k,L,N,R);
-    vec* nvectors;
 
+    vec* nvectors;
     nvectors=open_and_create_vectors(input_file,&no_of_coordinates,&no_of_vectors);
     if(nvectors==NULL)
         return -1;
-    printf("no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
+    printf("Input:: no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
+
+    vec* qvectors;
+    qvectors=open_and_create_vectors(query_file,&queries_no_of_coordinates,&queries_no_of_vectors);  
+    if(nvectors==NULL)
+        return -1;
+    printf("Queries:: queries_no_of_vectors: %d, queries_no_of_coordinates: %d\n",queries_no_of_vectors,queries_no_of_coordinates);
+    
+    auto start1 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
    // print_vectors(nvectors,no_of_vectors,no_of_coordinates);
     Lhashtables lht(L,no_of_coordinates,k);
     lht.lsh_start(no_of_vectors,nvectors);
    
-    vec* qvectors;
-    qvectors=open_and_create_vectors(query_file,&queries_no_of_coordinates,&queries_no_of_vectors);  
-    printf("Queries:: queries_no_of_vectors: %d, queries_no_of_coordinates: %d\n",queries_no_of_vectors,queries_no_of_coordinates);
+    vector<dist_vec>* dsvec2;
+    dsvec2=lht.find_k_nearest(qvectors,N,queries_no_of_vectors);
+
+    auto stop1 = high_resolution_clock::now();
+    auto duration1 = duration_cast<microseconds>(stop1 - start1);
+    double time1=((double)duration1.count()/1000000);
+    //double time1=((duration1.count()+500)/1000);
+    //cout<<"Duration1: "<<duration1.count()<<endl;
+
+
+    auto start2 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+    vector<dist_vec>* dsvec3;
     
     //brute_calculate(qvectors[0].coord,nvectors,no_of_vectors,no_of_coordinates);
-    brute_calculate_all(qvectors,nvectors,no_of_vectors,no_of_coordinates,queries_no_of_vectors);
+    dsvec3=brute_calculate_all(qvectors,nvectors,no_of_vectors,no_of_coordinates,queries_no_of_vectors,N);
+    auto stop2 = high_resolution_clock::now();
+    auto duration2 = duration_cast<microseconds>(stop2 - start2);
+    double time2=((double)duration2.count()/1000000);
+    //double time2=((duration2.count()+500)/1000);
+    //cout<<"Duration2: "<<duration2.count()<<endl;
 
-    vector<dist_vec>* dsvec2;
+    vector<dist_vec>* dsvec4;
+    dsvec4=lht.find_in_LRadius(qvectors,R,queries_no_of_vectors);
 
-    dsvec2=lht.find_k_nearest(qvectors,N,queries_no_of_vectors);
-    for(int i=0;i<queries_no_of_vectors;i++)
-    for(int j=0;j<dsvec2[i].size();j++ )
-            if(dsvec2[i][j].vect!=NULL)
-            cout<<"For query:"<<i<<"vec id "<<dsvec2[i][j].vect->name<<"dist "<<dsvec2[i][j].dist<<endl;
+    print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time1,time2,dsvec3,dsvec4);
 
     cout<<"den krasaraaaa"<<endl;
 /*
@@ -734,13 +850,16 @@ int main(int argc, char *argv[]){
         {
         for (int j = 0; j < dsvec2[i].size(); ++j)
             {
-            delete &dsvec2[i][j];
+            delete dsvec2[i][j].vect;
             }
-        delete &dsvec2[i];
+       // delete &dsvec2[i];
         }
-    delete [] dsvec2;
+    //delete [] dsvec2;
 
 */
+    delete [] dsvec2;
+    delete [] dsvec3;
+    delete [] dsvec4;
    delete [] nvectors;
    delete [] qvectors;
 		
