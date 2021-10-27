@@ -769,11 +769,9 @@ vector<vector<dist_vec>*>* Lhashtables:: find_in_LRadius(vec* qvectors,int R,int
 }
 
 
-int print_to_file(char output_file[256],string lsh_or_hypercube,vector<vector<dist_vec>*>* dsvec2,int queries_no_of_vectors,vec* qvectors,double time_lsh,double time_true,vector<vector<dist_vec>*>* dsvec3,vector<vector<dist_vec>*>* dsvec4){
+int print_to_file(char output_file[256],string lsh_or_hypercube,vector<vector<dist_vec>*>* dsvec2,int queries_no_of_vectors,vec* qvectors,double time_lsh,double time_true,vector<vector<dist_vec>*>* dsvec3,vector<vector<dist_vec>*>* dsvec4,double R){
     ofstream outfile;
     outfile.open(output_file);
-    //for every query
-    //cout<<"EFTASA EDW!!"<<endl;
 
     for(int i=0;i<queries_no_of_vectors;i++){
         outfile<<"Query: ";
@@ -800,7 +798,7 @@ int print_to_file(char output_file[256],string lsh_or_hypercube,vector<vector<di
         outfile<<"tLSH: ";
         outfile<<time_lsh<<endl;
         outfile<<"tTrue: "<<time_true<<endl;
-        outfile<<"R-near neighbours:"<<endl;//den kserw an thelei R h thelei to noumero tou R
+        outfile<<R<<"-near neighbours:"<<endl;//den kserw an thelei R h thelei to noumero tou R
 
         vector<dist_vec>* dstemp4 =(*dsvec4)[i];
         int size4=dstemp4->size();
@@ -931,7 +929,7 @@ int main(int argc, char *argv[]){
         vector<vector<dist_vec>*>* dsvec4;
         dsvec4=lht->find_in_LRadius(qvectors,R,queries_no_of_vectors);
 
-        print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time1,time2,dsvec3,dsvec4);
+        print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time1,time2,dsvec3,dsvec4,R);
 
         cout<<"den krasaraaaa"<<endl;
   
@@ -952,11 +950,8 @@ int main(int argc, char *argv[]){
     dsvec3->clear();delete dsvec3;
     dsvec4->clear();delete dsvec4;
     }
-    // delete [] dsvec2;
-    // delete [] dsvec3;
-    // delete [] dsvec4;
     delete lht;
-   delete [] nvectors;
-   delete [] qvectors;
+    delete [] nvectors;
+    delete [] qvectors;
         
 }
