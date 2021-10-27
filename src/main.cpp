@@ -20,15 +20,15 @@ using namespace std::chrono;
 
 double normal_dist_generator(void);
 long int euclidean_remainder(long int a,long int b);
-int h_function(vector<int> p,vector<double> v,double t);
+int h_function(vector<double> p,vector<double> v,double t);
 long int g_function(int h[],vector<int> r,int k);
-long double vect_dist(vector<int> vecA,vector<int> vecB,int d);//euclydian apostasi meta3i  2 vectors
+long double vect_dist(vector<double> vecA,vector<double> vecB,int d);//euclydian apostasi meta3i  2 vectors
 
 class vec
 {
 public:
     string name;//to id ths grammhs-dianismatos
-    vector <int> coord;
+    vector <double> coord;
 };
 /*
 struct LinkedList{
@@ -289,7 +289,7 @@ void Lhashtables::Hashfun_init(void)
 
     }
 
-int h_function(vector<int> p,vector<double> v,double t){
+int h_function(vector<double> p,vector<double> v,double t){
     double in_prod;
     in_prod=inner_product(p.begin(),p.end(),v.begin(),0);
     in_prod+=t;
@@ -512,7 +512,7 @@ vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no
                     flag=1;
                 }
                 else
-                    nvectors[counter].coord.push_back(stoi(tok));
+                    nvectors[counter].coord.push_back(stof(tok));
                     
             }
         counter++;
@@ -539,7 +539,7 @@ void print_vectors(vec *nvectors,int no_of_vectors,int no_of_coordinates){
 
 
 
-long double vect_dist(vector<int> vecA,vector<int> vecB,int d)
+long double vect_dist(vector<double> vecA,vector<double> vecB,int d)
     {
     long double sum=0;
     for (int i = 0; i < d; ++i)
