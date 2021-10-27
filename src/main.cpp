@@ -16,7 +16,7 @@ using namespace std::chrono;
 
 #define RLIMIT 1000
 #define PNUM 4294967291
-#define W 4//meta3i 0 kai 6
+#define W 3//meta3i 0 kai 6
 
 double normal_dist_generator(void);
 long int euclidean_remainder(long int a,long int b);
@@ -265,7 +265,7 @@ void Lhashtables::Hashfun_init(void)
     default_random_engine e(seed);
 
     std::uniform_int_distribution<int>  distrR(-RLIMIT,RLIMIT);
-    std::uniform_real_distribution<double>  distrT(0.0,W);
+    std::uniform_real_distribution<double>  distrT(0.0,W*1.0);
 
 
     for (int Li = 0; Li < L; ++Li)
@@ -319,7 +319,7 @@ long int g_function(int h[],vector<int> r,int k){
 int Lhashtables:: lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors){
     int h_return;
     int h[this->k];
-    int tablesize=no_of_vectors/4;//apo diafaneies
+    int tablesize=no_of_vectors/16;//apo diafaneies
     this->Lhtables[no_of_ht].hashtable_init(tablesize);
     long int g_notablesize;
     for(int i=0;i<no_of_vectors;i++){
@@ -373,7 +373,7 @@ int argsOK(int argc, char *argv[])
     return 1;
 }
 
-int input_handler(int argc, char *argv[],int* k, int* L, int* N,int* R,char (&input_file)[256], char (&query_file)[256], char (&output_file)[256]){
+int input_handler(int argc, char *argv[],int* k, int* L, int* N,double* R,char (&input_file)[256], char (&query_file)[256], char (&output_file)[256]){
     char temp[256];
     if(argsOK(argc,argv)){
         printf("All parameters given from command line...\n");
@@ -383,7 +383,7 @@ int input_handler(int argc, char *argv[],int* k, int* L, int* N,int* R,char (&in
         *(k)=atoi(argv[6]);
         *(L)=atoi(argv[8]);
         *(N)=atoi(argv[12]);
-        *(R)=atoi(argv[14]);
+        *(R)=atof(argv[14]);
     }else{
         printf("Parameters were NOT given from command line, please input them to contiue!\n");
         //default times
@@ -446,7 +446,7 @@ int input_handler(int argc, char *argv[],int* k, int* L, int* N,int* R,char (&in
             *(R)=10000;
         else{
              if(isdigit(temp[0]))
-                *(R)=atoi(temp);
+                *(R)=atof(temp);
             else{
                 printf("You did not enter a number or d! I will not tolerate this! Exiting...\n");
                 return(1);
@@ -568,7 +568,12 @@ vector<dist_vec>& brute_calculate(vec* qvector,vec* nvectors,int no_of_vectors,i
         else
             break;
         }
-        
+        while(!Q.empty())
+        {
+           
+            Q.pop();
+            //delete t;
+        }
     return *dsvec;      
     
 }
@@ -658,6 +663,12 @@ vector<dist_vec>& Lhashtables::NN_search(vec* nvector,int N)
         else
             break;
         }
+        while(!Q.empty())
+        {
+           
+            Q.pop();
+            //delete t;
+        }
         
     return *dsvec;      
     }
@@ -683,6 +694,7 @@ vector<dist_vec>* Lhashtables:: find_k_nearest(vec* qvectors,int N,int queries_n
 
 vector<dist_vec>& Lhashtables::LRadius_search(vec* nvector,int R)
     {
+        cout<<d<<endl;
         int counter=0;
     int element_count=0;
     priority_queue<dist_vec, vector<dist_vec>, pqcompare> Q;
@@ -728,7 +740,12 @@ vector<dist_vec>& Lhashtables::LRadius_search(vec* nvector,int R)
             dsvec->push_back(tempdv);
             Q.pop();
             }
-        
+        while(!Q.empty())
+        {
+           
+            Q.pop();
+            //delete t;
+        }
         
     return *dsvec;      
     }
@@ -787,80 +804,139 @@ int print_to_file(char output_file[256],string lsh_or_hypercube,vector<dist_vec>
 }
 
 
+int repeat_handler(vec* nvectors, vec* qvectors,char* input_file,char*query_file,char* output_file,Lhashtables *lht){
+    cout<<"To end programm type 0, To repeat with new query_file and input_file type 1, To repeat with new input_file type 2, To repeat with new query_file type 3 : "<<endl;
+    int input;
+    char temp[256];
+    char scanret[256];
+    while(1){
+        strcpy(temp,"");
+        strcpy(scanret,"");
+        scanf("%s",scanret);
+        if(isdigit(scanret[0]))
+            input=stoi(scanret);
+        else
+            input=-5;
+        if(input==0){
+            return -1;
+        }
+        else if(input==1){
+            
+            cout<<"Please enter input_file"<<endl;
+            scanf("%s",temp);
+            strcpy(input_file,temp);
+            cout<<"Please enter query_file"<<endl;
+            strcpy(temp,"");
+            scanf("%s",temp);
+            strcpy(query_file,temp);
+            cout<<"Please enter output_file"<<endl;
+            strcpy(temp,"");
+            scanf("%s",temp);
+            strcpy(output_file,temp);
+            delete [] nvectors;
+            delete [] qvectors;
+            delete lht;
+            return 0;
+        }else if(input ==2){
+            cout<<"Please enter input_file"<<endl;
+            scanf("%s",temp);
+            strcpy(input_file,temp);
+            cout<<"Please enter output_file"<<endl;
+            strcpy(temp,"");
+            scanf("%s",temp);
+            strcpy(output_file,temp);
+            delete [] nvectors;
+            delete lht;
+            return 1;
+        }else if(input==3){
+            cout<<"Please enter query_file"<<endl;
+            scanf("%s",temp);
+            strcpy(query_file,temp);
+            cout<<"Please enter output_file"<<endl;
+            strcpy(temp,"");
+            scanf("%s",temp);
+            strcpy(output_file,temp);
+            delete [] qvectors;
+            return 2;
+        }else cout<<"You typed something wrong, please try again!"<<endl;
+    }
+
+}
+
 
 
 int main(int argc, char *argv[]){
     char input_file[256],query_file[256],output_file[256],temp[256];
-    int k,L,N,R;//allagi tou R se dekadiko arithmo
+    int k,L,N;
+    double R;
     int no_of_vectors,no_of_coordinates;
     int queries_no_of_vectors,queries_no_of_coordinates;
     int ret;
+    vec* nvectors;
+    vec* qvectors;
+    Lhashtables *lht;
     string lsh_or_hypercube="distanceLSH: ";
 	if(input_handler(argc,argv,&k,&L,&N,&R,(input_file), query_file, output_file))
         return -1;
 
-    printf("input_file: %s, query_file: %s, output_file: %s,k:%d,L:%d,N:%d,R:%d\n",input_file,query_file,output_file,k,L,N,R);
+    printf("input_file: %s, query_file: %s, output_file: %s,k:%d,L:%d,N:%d,R:%f\n",input_file,query_file,output_file,k,L,N,R);
+    int flag=0;
+    while(flag!=-1){
 
-    vec* nvectors;
-    nvectors=open_and_create_vectors(input_file,&no_of_coordinates,&no_of_vectors);
-    if(nvectors==NULL)
-        return -1;
-    printf("Input:: no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
-
-    vec* qvectors;
-    qvectors=open_and_create_vectors(query_file,&queries_no_of_coordinates,&queries_no_of_vectors);  
-    if(nvectors==NULL)
-        return -1;
-    printf("Queries:: queries_no_of_vectors: %d, queries_no_of_coordinates: %d\n",queries_no_of_vectors,queries_no_of_coordinates);
-    
-    auto start1 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
-   // print_vectors(nvectors,no_of_vectors,no_of_coordinates);
-    Lhashtables lht(L,no_of_coordinates,k);
-    lht.lsh_start(no_of_vectors,nvectors);
-   
-    vector<dist_vec>* dsvec2;
-    dsvec2=lht.find_k_nearest(qvectors,N,queries_no_of_vectors);
-
-    auto stop1 = high_resolution_clock::now();
-    auto duration1 = duration_cast<microseconds>(stop1 - start1);
-    double time1=((double)duration1.count()/1000000);
-    //double time1=((duration1.count()+500)/1000);
-    //cout<<"Duration1: "<<duration1.count()<<endl;
-
-
-    auto start2 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
-    vector<dist_vec>* dsvec3;
-    
-    //brute_calculate(qvectors[0].coord,nvectors,no_of_vectors,no_of_coordinates);
-    dsvec3=brute_calculate_all(qvectors,nvectors,no_of_vectors,no_of_coordinates,queries_no_of_vectors,N);
-    auto stop2 = high_resolution_clock::now();
-    auto duration2 = duration_cast<microseconds>(stop2 - start2);
-    double time2=((double)duration2.count()/1000000);
-    //double time2=((duration2.count()+500)/1000);
-    //cout<<"Duration2: "<<duration2.count()<<endl;
-
-    vector<dist_vec>* dsvec4;
-    dsvec4=lht.find_in_LRadius(qvectors,R,queries_no_of_vectors);
-
-    print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time1,time2,dsvec3,dsvec4);
-
-    cout<<"den krasaraaaa"<<endl;
-/*
-    for (int i = 0; i < queries_no_of_vectors; ++i)
-        {
-        for (int j = 0; j < dsvec2[i].size(); ++j)
-            {
-            delete dsvec2[i][j].vect;
-            }
-       // delete &dsvec2[i];
+        if(flag==0 || flag==1){
+            nvectors=open_and_create_vectors(input_file,&no_of_coordinates,&no_of_vectors);
+            if(nvectors==NULL)
+                return -1;
+            printf("Input:: no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
         }
-    //delete [] dsvec2;
 
-*/
+        if(flag==0 || flag==2){
+            qvectors=open_and_create_vectors(query_file,&queries_no_of_coordinates,&queries_no_of_vectors);  
+            if(nvectors==NULL)
+                return -1;
+            printf("Queries:: queries_no_of_vectors: %d, queries_no_of_coordinates: %d\n",queries_no_of_vectors,queries_no_of_coordinates);
+        }
+
+
+        auto start1 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+        if(flag==0 || flag==1){
+            lht=new Lhashtables(L,no_of_coordinates,k);
+            lht->lsh_start(no_of_vectors,nvectors);
+        }
+        vector<dist_vec>* dsvec2;
+        dsvec2=lht->find_k_nearest(qvectors,N,queries_no_of_vectors);
+        auto stop1 = high_resolution_clock::now();
+        auto duration1 = duration_cast<microseconds>(stop1 - start1);
+        double time1=((double)duration1.count()/1000000);
+
+
+
+        auto start2 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+        vector<dist_vec>* dsvec3;
+        dsvec3=brute_calculate_all(qvectors,nvectors,no_of_vectors,no_of_coordinates,queries_no_of_vectors,N);
+        auto stop2 = high_resolution_clock::now();
+        auto duration2 = duration_cast<microseconds>(stop2 - start2);
+        double time2=((double)duration2.count()/1000000);
+        
+
+        vector<dist_vec>* dsvec4;
+        dsvec4=lht->find_in_LRadius(qvectors,R,queries_no_of_vectors);
+
+        print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time1,time2,dsvec3,dsvec4);
+
+        cout<<"den krasaraaaa"<<endl;
+  
+    flag=repeat_handler(nvectors,qvectors,input_file,query_file,output_file,lht);
     delete [] dsvec2;
     delete [] dsvec3;
     delete [] dsvec4;
+    }
+    // delete [] dsvec2;
+    // delete [] dsvec3;
+    // delete [] dsvec4;
+    delete lht;
    delete [] nvectors;
    delete [] qvectors;
 		
 }
+
