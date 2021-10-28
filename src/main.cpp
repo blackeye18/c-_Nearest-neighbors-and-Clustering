@@ -17,6 +17,7 @@ using namespace std::chrono;
 #define RLIMIT 1000
 #define PNUM 4294967291
 #define W 4//meta3i 0 kai 6
+const string metric = "euclidean_distance";
 
 double normal_dist_generator(void);
 long int euclidean_remainder(long int a,long int b);
@@ -30,31 +31,7 @@ public:
     string name;//to id ths grammhs-dianismatos
     vector <double> coord;
 };
-/*
-struct LinkedList{
-    int dist;
-    vec* vect=NULL;
-    LinkedList *next=NULL;
-};
 
- insert_in_list(LinkedList*head,int dist,vec* vect){
-    LinkedList* newnode= new LinkedList;
-    LinkedList * currnode=head;
-    newnode->dist=dist;
-    newnode->vec=vect;
-    newnode->next=NULL;
-
-    if(head==NULL){
-        head=newnode;
-        return;}
-    while(currnode->next!=NULL){
-        currnode=currnode->next;
-    }
-    currnode->next=newnode;
-    return;
-}
-
-*/
 
 class dist_vec
     {public:
@@ -95,23 +72,8 @@ class node
         int id;
         vec* vect=NULL;
         node* next=NULL;
-        //~node(void);
     };
-    /*
-node::~node()
-    {
-    //if(vect!=NULL)
-      //  {
-        //delete vect;
-        //vect=NULL;
-        //}
-    if(next!=NULL)
-        {
-        delete next;
-        next=NULL;
-        }
-    }
-    */
+
 
 class hashtable
     {
@@ -369,25 +331,41 @@ int Lhashtables:: lsh_start(int no_of_vectors,vec *nvectors){
 //elegxoume an to # twn arguments einai swsto
 int argsOK(int argc, char *argv[])
 {
-    if (argc != 15)
+    if (argc == 15 || argc== 11)
     {
         //printf("Error in # of args\n");
-        return 0;
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 int input_handler(int argc, char *argv[],int* k, int* L, int* N,double* R,char (&input_file)[256], char (&query_file)[256], char (&output_file)[256]){
     char temp[256];
     if(argsOK(argc,argv)){
-        printf("All parameters given from command line...\n");
-        strcpy((input_file),argv[2]);
-        strcpy((query_file),argv[4]);
-        strcpy((output_file),argv[10]);
-        *(k)=atoi(argv[6]);
-        *(L)=atoi(argv[8]);
-        *(N)=atoi(argv[12]);
-        *(R)=atof(argv[14]);
+        if(argc==15){
+            printf("All parameters given from command line...\n");
+            strcpy((input_file),argv[2]);
+            strcpy((query_file),argv[4]);
+            strcpy((output_file),argv[10]);
+            *(k)=atoi(argv[6]);
+            if(*(k)==0)//bad user safe
+                *(k)=1;
+            *(L)=atoi(argv[8]);
+            if(*(L)==0)
+                *(L)=1;
+            *(N)=atoi(argv[12]);
+            *(R)=atof(argv[14]);
+        }else{
+            printf("Almost all parameters given from command line... Using default for k and L\n");
+            strcpy((input_file),argv[2]);
+            strcpy((query_file),argv[4]);
+            strcpy((output_file),argv[6]);
+            *(k)=4;
+            *(L)=5;
+            *(N)=atoi(argv[8]);
+            *(R)=atof(argv[10]);
+
+        }
     }else{
         printf("Parameters were NOT given from command line, please input them to contiue!\n");
         //default times
@@ -554,8 +532,13 @@ vector<dist_vec>* brute_calculate(vec* qvector,vec* nvectors,int no_of_vectors,i
     long double dist;
     priority_queue<dist_vec, vector<dist_vec>, pqcompare> Q;
     for(int i=0;i<no_of_vectors;i++){
-        dist=vect_dist(qvector[pos].coord,nvectors[i].coord,no_of_coordinates);
-        Q.push(dist_vec(dist,&(nvectors[i])));
+        if(metric=="euclidean_distance"){
+            dist=vect_dist(qvector[pos].coord,nvectors[i].coord,no_of_coordinates);
+            Q.push(dist_vec(dist,&(nvectors[i])));
+        }else{
+         cout<<"No function for metric:"<<metric<<endl;
+         return NULL;
+        }
         //cout<<dist<<endl;
     }
 
@@ -623,8 +606,14 @@ vector<dist_vec>* Lhashtables::NN_search(vec* nvector,int N)
             	if(currnode->hashvalue == g_notablesize[li])
                 	{
                     counter++;
-                	long double dist=vect_dist(nvector->coord,currnode->vect->coord,d);
-                	Q.push(dist_vec(dist,currnode->vect));
+                    if(metric=="euclidean_distance"){
+                    	long double dist=vect_dist(nvector->coord,currnode->vect->coord,d);
+                    	Q.push(dist_vec(dist,currnode->vect));
+                    }else{
+                        cout<<"No function for metric:"<<metric<<endl;
+                        return NULL;
+                    }
+
                 	}
                 }
               else
@@ -719,12 +708,17 @@ vector<dist_vec>* Lhashtables::LRadius_search(vec* nvector,int R)
             {
             nn++;
             if(currnode->vect!=NULL)
-          		{
+          	{
             	counter++;
-            	long double dist=vect_dist(nvector->coord,currnode->vect->coord,d);
-            	if(dist<R)
-                	Q.push(dist_vec(dist,currnode->vect));
-            	}
+                if(metric=="euclidean_distance"){
+            	   long double dist=vect_dist(nvector->coord,currnode->vect->coord,d);
+            	   if(dist<R)
+                        Q.push(dist_vec(dist,currnode->vect));
+                }else{
+                    cout<<"No function for metric:"<<metric<<endl;
+                    return NULL;
+                }
+            }
             else
               	cout<<"NULL vect found"<<endl;
             currnode=currnode->next;    
