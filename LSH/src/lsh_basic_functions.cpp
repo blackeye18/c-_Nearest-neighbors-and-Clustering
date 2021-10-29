@@ -189,7 +189,7 @@ long int g_function(int h[],vector<int> r,int k){
 int Lhashtables:: lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors){
     int h_return;
     int h[this->k];
-    int tablesize=no_of_vectors/16;//apo diafaneies
+    int tablesize=no_of_vectors/BUCKET_RATIO;//apo diafaneies
     this->Lhtables[no_of_ht].hashtable_init(tablesize);
     long int g_notablesize;
     for(int i=0;i<no_of_vectors;i++){
