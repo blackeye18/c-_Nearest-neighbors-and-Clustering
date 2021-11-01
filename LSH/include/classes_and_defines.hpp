@@ -82,8 +82,8 @@ class hashtable
         int lsh_continue(int,int,vec*);
         vector<dist_vec>* NN_search(vec*,int);
         vector<vector<dist_vec>*>* find_k_nearest(vec* ,int ,int );
-        vector<dist_vec>* LRadius_search(vec* ,int );
-        vector<vector<dist_vec>*>* find_in_LRadius(vec* ,int ,int );
+        vector<dist_vec>* LRadius_search(vec* ,double );
+        vector<vector<dist_vec>*>* find_in_LRadius(vec* ,double ,int );
         ~Lhashtables(void);
 
     };

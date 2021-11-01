@@ -184,7 +184,7 @@ vector<vector<dist_vec>*>* Lhashtables:: find_k_nearest(vec* qvectors,int N,int 
     return dsvec2;
 }
 
-vector<dist_vec>* Lhashtables::LRadius_search(vec* nvector,int R)
+vector<dist_vec>* Lhashtables::LRadius_search(vec* nvector,double R)
     {
     int counter=0;
     int element_count=0;
@@ -244,7 +244,7 @@ vector<dist_vec>* Lhashtables::LRadius_search(vec* nvector,int R)
     return dsvec;      
 }
 
-vector<vector<dist_vec>*>* Lhashtables:: find_in_LRadius(vec* qvectors,int R,int queries_no_of_vectors){
+vector<vector<dist_vec>*>* Lhashtables:: find_in_LRadius(vec* qvectors,double R,int queries_no_of_vectors){
     //vector<dist_vec> dsvec;
     vector<vector<dist_vec>*>* dsvec2;
     dsvec2= new vector<vector<dist_vec>*>;
