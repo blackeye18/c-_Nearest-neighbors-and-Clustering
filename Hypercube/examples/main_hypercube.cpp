@@ -56,7 +56,7 @@ class hypercube
     	vector<double> t;
     	vector<vector<int>> labels;
 
-    	multimap<vector<bool>,vec*> cube_map;
+    	vector<vector<vec*>> cube_vec;
 
     	//int L;//number of hashtables;
     	int d;//dimensions
@@ -65,21 +65,38 @@ class hypercube
     	int probes;//maximum count of cube_map checked
     	int no_of_vectors;
     	int labels_count;
+    	unsigned int powk;
 
 	public:
 		hypercube(int M,int probes,int d ,int k,int no_of_vectors);
-		~hypercube();
+		//~hypercube();
 		void Hashfun_init(void);//initializes tables used for hashing 
-		vector<bool> hash_calc(vec* vect);//returns the bin cube vector point
+		unsigned int hash_calc(vec* vect);//returns the bin cube vector point
 		int vec_insert(vec* vect);//inserts a vector to the multimap
 		void cube_start(int ,vec*);
 		vector<vector<dist_vec>*>* all_NN_search(vec* ,int ,int );
 		vector<dist_vec>* NN_search(vec*,int);
-		void cube_map_print();
+        vector<dist_vec>* RANGE_search(vec* ,double );
+        vector<vector<dist_vec>*>* all_RANGE_search(vec* ,double ,int );
+		//void cube_map_print();
 	
 	};
 
 //functions
+
+
+unsigned int hammingDistance(unsigned int n1, unsigned int n2)
+	{
+    unsigned int x = n1 ^ n2;
+    unsigned int setBits = 0;
+ 
+    while (x > 0) {
+        setBits += x & 1;
+        x >>= 1;
+    }
+ 
+    	return setBits;
+	}
 double normal_dist_generator(void)
     {
     std::random_device rd{};
@@ -140,6 +157,8 @@ void hypercube::Hashfun_init(void)
     labels.resize(k,vector<int>(labels_count));
 
 
+    cube_vec.resize(powk,vector<vec*>(0));
+
     unsigned seed=std::chrono::steady_clock::now().time_since_epoch().count();
     default_random_engine e(seed);
 
@@ -162,24 +181,32 @@ void hypercube::Hashfun_init(void)
         }
 
     }
-vector<bool> hypercube::hash_calc(vec* vect)
+unsigned int hypercube::hash_calc(vec* vect)
     {
-    vector<bool> bits;
+    unsigned int bits=0;
     for (int ki = 0; ki < k; ++ki)
         {
         int h=h_function(vect->coord,v[ki],t[ki]);
-        int hmod=h%labels_count;
-        bits.push_back(labels[ki][hmod]);
+        //cout<<"labels_count: "<<labels_count<<endl;
+        int hmod=euclidean_remainder(h,labels_count);
+        bits=bits<<1;
+        //cout<<labels[ki][hmod];
+        bits+=labels[ki][hmod];
         }
+      //cout<<endl;
     return bits;
     }
 int hypercube::vec_insert(vec* vect)
     {
-    cube_map.insert(pair <vector<bool>,vec*> (this->hash_calc(vect),vect));
+    unsigned int ki=this->hash_calc(vect);
+    //cout<<"inserting "<<ki<<endl;
+    //cube_map.insert(pair <vector<bool>,vec*> (this->hash_calc(vect),vect));
+    cube_vec[ki].push_back(vect);
     return 0;
     }
 
 void hypercube::cube_start(int no_of_vectors,vec*nvectors){
+	powk=pow(2,k);
 	this->Hashfun_init();
 	int ret=0;
 	for(int i=0;i<no_of_vectors;i++){
@@ -192,81 +219,72 @@ void hypercube::cube_start(int no_of_vectors,vec*nvectors){
 }
 
 
-
 vector<dist_vec>* hypercube::NN_search(vec* qvect,int N)
     {
     int M_count=0;
     int probes_count=0;
 
-    vector<bool> qbits=this->hash_calc(qvect);
+    unsigned int qbits=this->hash_calc(qvect);
+
     priority_queue<dist_vec, vector<dist_vec>, pqcompare> Q;
 
-    auto itr1 = cube_map.lower_bound(qbits);
-    auto itr2 = cube_map.upper_bound(qbits);
+    for (int i = 0; i < cube_vec[qbits].size(); ++i)
+    	{
+    		//cout<<"Mphka"<<endl;
+    	probes_count=1;
+    	M_count++;
+        if(metric=="euclidean_distance"){
+            long double dist= vect_dist(qvect->coord,cube_vec[qbits][i]->coord,d);
+            Q.push(dist_vec(dist,cube_vec[qbits][i]));
+        }else{
+            cout<<"No function for metric:"<<metric<<endl;
+                return NULL;
+        }
+        if (probes_count>=probes||M_count>=M)
+            break;
+    	}
+
+    //cube_vec[qbits].clear();
     
-    while (itr1 != itr2)   
-        {
-        probes_count=1;
-        if (itr1 -> first == qbits)
-            {
-            long double dist= vect_dist(qvect->coord,(itr1 -> second)->coord,d);
-            Q.push(dist_vec(dist,itr1 -> second));M_count++;
-            }  
-        itr1++;
-        if (probes_count==probes||M_count==M)
-            break;
-        }
-       //cout<<"alright1"<<endl;
-    vector<vector<vec*>> vv;
-    vv.resize(k+1,vector<vec*>(1));
+int temp=0;
+    if (probes_count<=probes && M_count<=M)
+    	{//cout<<"Mphka2"<<endl;
 
+    	for (int hd = 1; hd < k; ++hd)
+    		{
+    			//temp++;
+    		for (int ki = 0; ki <powk; ++ki)
+    			{temp++;
 
-    auto itr = cube_map.begin();
-    int ham_dist=hamming_distance(itr->first,qbits);
-    vv[ham_dist].push_back(itr->second);
-    vector<bool> prevbits=itr->first;
-    itr++;
-    //cout<<"alright2"<<endl;
-    for (; itr != cube_map.end(); itr++) 
-        {
-        	//cout<<"alright2.1"<<endl;
-        if(itr->first==prevbits)
-            {
-            	//cout<<"alright2.2"<<endl;
-            vv[ham_dist].push_back(itr->second);
-            }
-        else
-            {
-            	//cout<<"allright2.3"<<endl;
-            ham_dist=hamming_distance(itr->first,qbits);
-            //cout<<"alright2.4"<<endl;
-            //cout<<"ham_dist:"<<ham_dist<<endl;
-            vv[ham_dist].push_back(itr->second);
-            //cout<<"alright2.5"<<endl;
-            prevbits=itr->first;
-           // cout<<"alright2.6"<<endl;
-            }
-        }
-    //cout<<"alright3"<<endl;
-    for (int hd = 1; hd < k; ++hd)
-        {
-        if (probes_count==probes||M_count==M)
-            break;
-        probes_count++;
-        for (int i=0; i<vv[hd].size(); i++)
-            {
-            if (M_count==M)
-                break;
-            vec* tmpvec=vv[hd][i];
-            if(tmpvec!=NULL)
-            	{
-            	M_count++;
-            	long double dist= vect_dist(qvect->coord,tmpvec->coord,d);
-            	Q.push(dist_vec(dist,tmpvec));
-            	}
-            }
-        }
+    			if(!cube_vec[ki].empty() && hammingDistance(ki,qbits)==hd)
+    				{
 
+    				probes_count++;
+    				for (int i = 0; i < cube_vec[ki].size(); ++i)
+    					{
+    					M_count++;
+                        if(metric=="euclidean_distance"){
+        				    long double dist= vect_dist(qvect->coord,cube_vec[ki][i]->coord,d);
+        				    Q.push(dist_vec(dist,cube_vec[ki][i]));
+                        }else{
+                            cout<<"No function for metric:"<<metric<<endl;
+                            return NULL;
+                        }
+        				if (M_count>=M)
+            				break;
+    					}
+
+            		//cube_vec[ki].clear();
+    				}
+    			if (probes_count>=probes||M_count>=M)
+            		break;
+    			}
+    		if (probes_count>=probes||M_count>=M)
+            	break;
+    		}
+    	}
+//cout<<"M_count"<<M_count<<"probes_count"<<probes<<endl;
+//cout<<"temp"<<temp<<endl;
     vector<dist_vec>* dsvec=new vector<dist_vec>;//=new vector<dist_vec>;
     //cout<<"alright4"<<endl;
     for (int i = 0; i < N; ++i)
@@ -290,24 +308,114 @@ vector<vector<dist_vec>*>* hypercube:: all_NN_search(vec* qvectors,int N,int que
     dsvec2=new vector<vector<dist_vec>*>;
 
     for(int i=0;i<queries_no_of_vectors;i++){
-        dsvec2->push_back(NN_search(&(qvectors[i]),N));
+        vector<dist_vec>* temp=NN_search(&(qvectors[i]),N);
+        if(temp==NULL){
+            delete dsvec2;
+            return NULL;
+        }
+        dsvec2->push_back(temp);
     }
     return dsvec2;
 }
 
-void hypercube::cube_map_print()
+
+vector<dist_vec>* hypercube::RANGE_search(vec* qvect,double R)
     {
-    	int counter=0;
-    for (auto itr = cube_map.begin(); itr != cube_map.end(); itr++) 
+    int M_count=0;
+    int probes_count=0;
+
+    unsigned int qbits=this->hash_calc(qvect);
+
+    priority_queue<dist_vec, vector<dist_vec>, pqcompare> Q;
+
+    for (int i = 0; i < cube_vec[qbits].size(); ++i)
         {
-        cout<<"BIN ID: ";
-        for (int i = 0; i < itr->first.size(); ++i)
-            cout<<itr->first[i];
-        cout<<" "<<itr->second->name<<endl;
-        counter++;
+            //cout<<"Mphka"<<endl;
+        probes_count=1;
+        M_count++;
+        if(metric=="euclidean_distance"){
+            long double dist= vect_dist(qvect->coord,cube_vec[qbits][i]->coord,d);
+            if(dist<=R)
+                Q.push(dist_vec(dist,cube_vec[qbits][i]));
+        }else
+        {
+            cout<<"No function for metric:"<<metric<<endl;
+            return NULL;
         }
-        cout<<"counter:"<<counter<<endl;
+        if (probes_count>=probes||M_count>=M)
+            break;
+        }
+
+    //cube_vec[qbits].clear();
+    
+int temp=0;
+    if (probes_count<=probes && M_count<=M)
+        {//cout<<"Mphka2"<<endl;
+
+        for (int hd = 1; hd < k; ++hd)
+            {
+                //temp++;
+            for (int ki = 0; ki <powk; ++ki)
+                {temp++;
+
+                if(!cube_vec[ki].empty() && hammingDistance(ki,qbits)==hd)
+                    {
+
+                    probes_count++;
+                    for (int i = 0; i < cube_vec[ki].size(); ++i)
+                        {
+                        M_count++;
+                        if(metric=="euclidean_distance"){
+                        long double dist= vect_dist(qvect->coord,cube_vec[ki][i]->coord,d);
+                        if(dist<R)
+                            Q.push(dist_vec(dist,cube_vec[ki][i]));
+                        }else{
+                            cout<<"No function for metric:"<<metric<<endl;
+                            return NULL;
+                        }
+                        if (M_count>=M)
+                            break;
+                        }
+
+                    //cube_vec[ki].clear();
+                    }
+                if (probes_count>=probes||M_count>=M)
+                    break;
+                }
+            if (probes_count>=probes||M_count>=M)
+                break;
+            }
+        }
+//cout<<"M_count"<<M_count<<"probes_count"<<probes<<endl;
+//cout<<"temp"<<temp<<endl;
+    vector<dist_vec>* dsvec=new vector<dist_vec>;//=new vector<dist_vec>;
+    //cout<<"alright4"<<endl;
+   
+        while(!Q.empty())
+            {
+            dist_vec tempdv(Q.top().dist,Q.top().vect);
+            dsvec->push_back(tempdv);
+            Q.pop();
+            }
+        
+        
+    return dsvec;  
     }
+
+
+
+
+
+vector<vector<dist_vec>*>* hypercube:: all_RANGE_search(vec* qvectors,double R,int queries_no_of_vectors){
+    vector<vector<dist_vec>*>* dsvec2;
+    dsvec2=new vector<vector<dist_vec>*>;
+
+    for(int i=0;i<queries_no_of_vectors;i++){
+        dsvec2->push_back(RANGE_search(&(qvectors[i]),R));
+    }
+    return dsvec2;
+}
+
 
 
 //elegxoume an to # twn arguments einai swsto
@@ -501,7 +609,7 @@ vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no
 }
 
 
-int repeat_handler(vec* nvectors, vec* qvectors,char* input_file,char*query_file,char* output_file){//,Lhashtables *lht
+int repeat_handler(vec* nvectors, vec* qvectors,char* input_file,char*query_file,char* output_file,hypercube *cube){//,Lhashtables *lht
     cout<<"To end programm type 0, To repeat with new query_file and input_file type 1, To repeat with new input_file type 2, To repeat with new query_file type 3 : "<<endl;
     int input;
     char temp[256];
@@ -532,7 +640,7 @@ int repeat_handler(vec* nvectors, vec* qvectors,char* input_file,char*query_file
             strcpy(output_file,temp);
             delete [] nvectors;
             delete [] qvectors;
-            //delete lht;
+            delete cube;
             return 0;
         }else if(input ==2){
             cout<<"Please enter input_file"<<endl;
@@ -543,7 +651,7 @@ int repeat_handler(vec* nvectors, vec* qvectors,char* input_file,char*query_file
             scanf("%s",temp);
             strcpy(output_file,temp);
             delete [] nvectors;
-            //delete lht;
+            delete cube;
             return 1;
         }else if(input==3){
             cout<<"Please enter query_file"<<endl;
@@ -602,7 +710,7 @@ vector<vector<dist_vec>*>* brute_calculate_all(vec* qvectors,vec* nvectors,int n
     return dsvec2;
 }
 
-int print_to_file(char output_file[256],string lsh_or_hypercube,vector<vector<dist_vec>*>* dsvec2,int queries_no_of_vectors,vec* qvectors,double time_lsh,double time_true,vector<vector<dist_vec>*>* dsvec3){//,vector<vector<dist_vec>*>* dsvec4,double R){
+int print_to_file(char output_file[256],string lsh_or_hypercube,vector<vector<dist_vec>*>* dsvec2,int queries_no_of_vectors,vec* qvectors,double time_lsh,double time_true,vector<vector<dist_vec>*>* dsvec3,vector<vector<dist_vec>*>* dsvec4,double R){
     ofstream outfile;
     outfile.open(output_file);
 
@@ -631,8 +739,8 @@ int print_to_file(char output_file[256],string lsh_or_hypercube,vector<vector<di
         outfile<<"tLSH: ";
         outfile<<time_lsh<<endl;
         outfile<<"tTrue: "<<time_true<<endl;
-        //outfile<<R<<"-near neighbours:"<<endl;//den kserw an thelei R h thelei to noumero tou R
-        /*
+        outfile<<R<<"-near neighbours:"<<endl;//den kserw an thelei R h thelei to noumero tou R
+        
         vector<dist_vec>* dstemp4 =(*dsvec4)[i];
         int size4=dstemp4->size();
         for(int r=0;r<size4;r++)
@@ -640,7 +748,7 @@ int print_to_file(char output_file[256],string lsh_or_hypercube,vector<vector<di
         	dist_vec ds4=(*dstemp4)[r];
             outfile<<ds4.vect->name<<endl;
         	}
-        */
+        
     }
     outfile.close();
 
@@ -695,6 +803,13 @@ int main(int argc, char *argv[]){
         auto stop1 = high_resolution_clock::now();
         auto duration1 = duration_cast<microseconds>(stop1 - start1);
         double time1=((double)duration1.count()/1000000);
+        if(dsvec2==NULL){
+            delete cube;
+            delete [] nvectors;
+            delete [] qvectors;
+            //cout<<"No function for metric:"<<metric<<endl;
+            return -1;
+        }
 
 
         cout<<"Now using brute calculation"<<endl;
@@ -705,31 +820,35 @@ int main(int argc, char *argv[]){
         auto duration2 = duration_cast<microseconds>(stop2 - start2);
         double time2=((double)duration2.count()/1000000);
 
-        print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time1,time2,dsvec3);//,dsvec4,R);
+
+        cout<<"Now using Radius Search"<<endl;
+        vector<vector<dist_vec>*>* dsvec4;
+        dsvec4=cube->all_RANGE_search(qvectors,R,queries_no_of_vectors);
+        print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time1,time2,dsvec3,dsvec4,R);
 
         cout<<"Output File Created!!"<<endl;
-        flag=repeat_handler(nvectors,qvectors,input_file,query_file,output_file);//,lht
+        flag=repeat_handler(nvectors,qvectors,input_file,query_file,output_file,cube);//,lht
     	
     	for(int i=0;i<queries_no_of_vectors;i++){
 
         vector<dist_vec>* dstemp2 =(*dsvec2)[i];
         vector<dist_vec>* dstemp3 =(*dsvec3)[i];
-        //vector<dist_vec>* dstemp4 =(*dsvec4)[i];
+        vector<dist_vec>* dstemp4 =(*dsvec4)[i];
 
         dstemp2->clear();delete dstemp2;
         dstemp3->clear();delete dstemp3;
-        //dstemp4->clear();delete dstemp4;
+        dstemp4->clear();delete dstemp4;
     	}
     
 
 	    dsvec2->clear();delete dsvec2;
 	    dsvec3->clear();delete dsvec3;
-	    //dsvec4->clear();delete dsvec4;
+	    dsvec4->clear();delete dsvec4;
 
 
 
     }
-    //delete cube;
+    delete cube;
     delete [] nvectors;
     delete [] qvectors;
 }
