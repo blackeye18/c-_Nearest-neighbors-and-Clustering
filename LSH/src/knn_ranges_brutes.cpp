@@ -130,8 +130,8 @@ vector<dist_vec>* Lhashtables::NN_search(vec* nvector,int N)
 
                 	}
                 }
-              else
-              	cout<<"NULL vect found"<<endl;
+              //else
+              	//cout<<"NULL vect found"<<endl;
             currnode=currnode->next;    
             }
 
@@ -147,8 +147,13 @@ vector<dist_vec>* Lhashtables::NN_search(vec* nvector,int N)
                 if(currnode->hashvalue != g_notablesize[li])
                     {
                         counter++;
-                    long double dist=vect_dist(nvector->coord,currnode->vect->coord,d);
-                    Q.push(dist_vec(dist,currnode->vect));
+                    if(metric=="euclidean_distance"){
+                        long double dist=vect_dist(nvector->coord,currnode->vect->coord,d);
+                        Q.push(dist_vec(dist,currnode->vect));
+                    }else{
+                        cout<<"No function for metric:"<<metric<<endl;
+                        return NULL;
+                    }
                     }
                 currnode=currnode->next;    
                 }
@@ -179,7 +184,12 @@ vector<vector<dist_vec>*>* Lhashtables:: find_k_nearest(vec* qvectors,int N,int 
     dsvec2=new vector<vector<dist_vec>*>;
 
     for(int i=0;i<queries_no_of_vectors;i++){
-        dsvec2->push_back(NN_search(&(qvectors[i]),N));
+        vector<dist_vec>* temp=NN_search(&(qvectors[i]),N);
+        if(temp==NULL){
+            delete dsvec2;
+            return NULL;
+        }
+        dsvec2->push_back(temp);
     }
     return dsvec2;
 }

@@ -62,7 +62,12 @@ int main(int argc, char *argv[]){
         auto stop1 = high_resolution_clock::now();
         auto duration1 = duration_cast<microseconds>(stop1 - start1);
         double time1=((double)duration1.count()/1000000);
-
+        if(dsvec2==NULL){
+            delete lht;
+            delete [] nvectors;
+            delete [] qvectors;
+            return -1;
+        }
 
         cout<<"Now using brute calculation"<<endl;
         auto start2 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
