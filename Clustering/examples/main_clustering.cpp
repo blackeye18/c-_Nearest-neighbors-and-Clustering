@@ -2,9 +2,18 @@
 #include <cstring>
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 
+
+
+class vec
+{
+public:
+    string name;//to id ths grammhs-dianismatos
+    vector <double> coord;
+};
 
 //elegxoume an to # twn arguments einai swsto
 int argsOK(int argc, char *argv[])
@@ -106,20 +115,84 @@ int input_handler(int argc, char *argv[],char (&input_file)[256], char (&configu
 return 0;
 }
 
+vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no_of_vectors){
+    //cout<<"aaa1";
+    int counter=0;
+    int flag=0;
+    ifstream input;
+    input.open(input_file);
+    if(!input){
+        cout<<"Something Terrible Happened! Maybe the input_file doesn't exist?! Exiting.."<<endl;
+        return NULL;
+    }
+
+    string sline;
+    string tok;
+
+
+    (*no_of_vectors)=0;
+    (*no_of_coordinates)=-1;//-1 giati metrame kai to arxiko id pou den einai coord
+
+    while (getline(input,sline))
+    {
+        (*no_of_vectors)++;
+        
+        if((*no_of_vectors)==1){
+            stringstream line(sline);
+
+            while(line>> tok)
+                (*no_of_coordinates)++;
+        }
+    }
+    input.close();
+    input.clear();
+    input.open(input_file);
+    if(!input){
+        cout<<"Something Terrible Happened! Maybe the input_file doesn't exist?! Exiting.."<<endl;
+        return NULL;
+    }
+    vec* nvectors;
+    nvectors = new vec[(*no_of_vectors)];
+    while (getline(input,sline))
+    {       flag=0;
+            stringstream line(sline);
+            while(line>> tok) {
+                if(flag==0){
+                    //cout<<"TOK:"<<tok<<endl;
+                    nvectors[counter].name=tok;
+                    flag=1;
+                }
+                else
+                    nvectors[counter].coord.push_back(stof(tok));
+                    
+            }
+        counter++;
+    }
+    //cout<<"NEW FUNCTION: no_of_vectors:"<<(*no_of_vectors)<<"no_of_coordinates:"<<(*no_of_coordinates)<<endl;
+    return nvectors;
+            
+}
 
 
 int main(int argc, char *argv[]){
-int complete_flag;
-int K_medians,L,k_lsh,M,k_hypercube,probes;
-char input_file[256],configuration_file[256],output_file[256],method[256];
+	int complete_flag;
+	int K_medians,L,k_lsh,M,k_hypercube,probes;
+	char input_file[256],configuration_file[256],output_file[256],method[256];
+	vec* nvectors;
+	int no_of_vectors,no_of_coordinates;
+
+	if(input_handler(argc,argv,input_file,configuration_file,output_file,method,&K_medians,&L,&k_lsh,&M,&k_hypercube,&probes,&complete_flag))
+		return -1;
+
+	cout<<"input_file: "<<input_file<<" configuration_file: "<<configuration_file<<" output_file :"<<output_file<<" method: "<<method<<endl;
+	cout<<"K_medians: "<<K_medians<<" L: "<<L<<" k_lsh: "<<k_lsh<<" M: "<<M<<" k_hypercube: "<<k_hypercube<<" probes: "<<probes<<" Complete: "<<complete_flag<<endl;
 
 
-if(input_handler(argc,argv,input_file,configuration_file,output_file,method,&K_medians,&L,&k_lsh,&M,&k_hypercube,&probes,&complete_flag))
-	return -1;
+	nvectors=open_and_create_vectors(input_file,&no_of_coordinates,&no_of_vectors);
+	if(nvectors==NULL)
+	    return -1;
+	printf("Input:: no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
+	        
 
-cout<<"input_file: "<<input_file<<" configuration_file: "<<configuration_file<<" output_file :"<<output_file<<" method: "<<method<<endl;
-cout<<"K_medians: "<<K_medians<<" L: "<<L<<" k_lsh: "<<k_lsh<<" M: "<<M<<" k_hypercube: "<<k_hypercube<<" probes: "<<probes<<" Complete: "<<complete_flag<<endl;
-
-
-return 0;
+	return 0;
 }
