@@ -3,7 +3,18 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-
+#include <iostream>
+#include <cstring>
+#include <cctype>
+#include <fstream>
+#include <sstream>
+#include <random>
+#include <chrono>
+#include <map>
+#include <cassert>
+#include <queue>
+#include <bitset>
+#include <algorithm>
 using namespace std;
 
 
@@ -15,6 +26,132 @@ public:
     vector <double> coord;
 };
 
+long double vect_dist(vector<double> vecA,vector<double> vecB,int d)
+{
+    long double sum=0;
+    for (int i = 0; i < d; ++i)
+        {
+        long double temp=abs(vecA[i]-vecB[i]);
+        sum+=temp*temp;
+        }
+    return sqrt(sum);
+}
+
+class cluster
+    {
+    private:
+        int K_medians;//number_of_clusters
+        int L;//number_of_vector_hash_tables
+        int k_lsh;//number_of_vector_hash_functions
+        int M;//max_number_M_hypercube
+        int k_hypercube;//number_of_hypercube_dimensions
+        int probes;//number_of_probes
+        int no_of_vectors;
+        int no_of_coordinates;
+
+
+    public:
+        cluster(int,int,int);
+        vector<int>* Kmeanplus(vec* nvect);
+        vector<vector<vec*>>* lloyds(vec* nvect,vector<int>* clustersvec);
+    };
+
+cluster::cluster(int K_medians,int no_of_vectors,int no_of_coordinates)
+:K_medians(K_medians),no_of_vectors(no_of_vectors),no_of_coordinates(no_of_coordinates){};
+
+vector<int>* cluster::Kmeanplus(vec* nvect)
+    {
+    unsigned seed=std::chrono::steady_clock::now().time_since_epoch().count();
+    default_random_engine e(seed);
+    std::uniform_int_distribution<int>  distrC(0,no_of_vectors-1);
+
+    vector<int>* clusters=new vector<int>;
+    clusters->push_back(distrC(e));
+    vector<long double> partial_sums; 
+    vector<int> r;
+
+    while(clusters->size()<K_medians)
+        {
+        r.clear();
+        partial_sums.clear();
+        long double sum=0;
+        for (int i = 0; i < no_of_vectors; ++i)
+            {
+            auto it = find(clusters->begin(),clusters->end(), i);
+            if(it==clusters->end())
+                {
+                long double mdist;
+                int mci;
+                for (int ci = 0; ci < clusters->size(); ++ci)
+                    {
+                    int clust=clusters->at(ci);
+                    if(ci==0)
+                        {
+                        mdist=vect_dist(nvect[clust].coord,nvect[i].coord,no_of_coordinates);
+                        mci=0;
+                        }
+                    else
+                        {
+                        long double dist=vect_dist(nvect[clust].coord,nvect[i].coord,no_of_coordinates);
+                        if (dist<mdist)
+                            {
+                            mdist=dist;
+                            mci=ci;
+                            }
+                        }
+                    }
+                sum+=mdist*mdist;
+                partial_sums.push_back(sum);
+                r.push_back(i);
+                }
+            }
+        std::uniform_real_distribution<long double>  distrX(0,sum);
+        long double X=distrX(e);
+        int position=upper_bound(partial_sums.begin(), partial_sums.end(), X)-partial_sums.begin();
+        
+        if(position>0)
+            if(partial_sums[position-1]>=X)
+                position--;
+
+        clusters->push_back(r[position]);
+        }
+    return clusters;
+    }
+vector<vector<vec*>>* cluster::lloyds(vec* nvect,vector<int>* clustersvec)
+    {
+    vector<vector<vec*>>* lloydsclust=new vector<vector<vec*>>;
+    lloydsclust->resize(clustersvec->size(),vector<vec*>(0));
+
+    for (int i = 0; i < no_of_vectors; ++i)
+        {
+        auto it = find(clustersvec->begin(),clustersvec->end(), i);
+        if(it==clustersvec->end())
+            {
+            long double mdist;
+            int mci;
+            for (int ci = 0; ci < clustersvec->size(); ++ci)
+                {
+                int clust=clustersvec->at(ci);
+                if(ci==0)
+                    {
+                    mdist=vect_dist(nvect[clust].coord,nvect[i].coord,no_of_coordinates);
+                    mci=0;
+                    }
+                else
+                    {
+                    long double dist=vect_dist(nvect[clust].coord,nvect[i].coord,no_of_coordinates);
+                    if (dist<mdist)
+                        {
+                        mdist=dist;
+                        mci=ci;
+                        }
+                    }
+                }
+            ((*lloydsclust)[mci]).push_back(&(nvect[i]));
+            }
+        }
+    return lloydsclust;
+    }
 //elegxoume an to # twn arguments einai swsto
 int argsOK(int argc, char *argv[])
 {
@@ -193,6 +330,15 @@ int main(int argc, char *argv[]){
 	    return -1;
 	printf("Input:: no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
 	        
+    cluster clus(K_medians,no_of_vectors,no_of_coordinates);
+    vector<int>* clustersvec;
+    clustersvec=clus.Kmeanplus(nvectors);
+    cout<<endl<<clustersvec->size()<<endl;
+    vector<vector<vec*>>* cluster_neighbours;
+    cluster_neighbours=clus.lloyds(nvectors,clustersvec);
+    for(int w=0;w<cluster_neighbours->size();w++){
+        cout<<(*cluster_neighbours)[w].size()<<endl;
+    }
 
 	return 0;
 }
