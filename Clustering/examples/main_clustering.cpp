@@ -15,9 +15,11 @@
 #include <queue>
 #include <bitset>
 #include <algorithm>
+#include <chrono>
+
 using namespace std;
 
-
+using namespace std::chrono;
 
 class vec
 {
@@ -54,6 +56,7 @@ class cluster
         cluster(int,int,int);
         vector<int>* Kmeanplus(vec* nvect);
         vector<vector<vec*>>* lloyds(vec* nvect,vector<int>* clustersvec);
+        vector<long double>* silhouette(vector<vector<vec*>>* cluster_neighbours,vector<int>* clustersvec,vec* nvect);
     };
 
 cluster::cluster(int K_medians,int no_of_vectors,int no_of_coordinates)
@@ -152,6 +155,90 @@ vector<vector<vec*>>* cluster::lloyds(vec* nvect,vector<int>* clustersvec)
         }
     return lloydsclust;
     }
+vector<long double>* cluster::silhouette(vector<vector<vec*>>* cluster_neighbours,vector<int>* clustersvec,vec* nvect)
+    {
+    vector<long double>* S=new vector<long double>;
+
+
+    for (int ci = 0; ci < cluster_neighbours->size(); ++ci)
+        {
+         long double sumSi=0;
+        int cluster_size=(*cluster_neighbours)[ci].size();
+        vector<vector<long double>> prev_dist;
+        prev_dist.resize(cluster_size,vector<long double>(cluster_size));
+
+        for (int vi = 0; vi <cluster_size ; ++vi)
+            {
+            //ipologizoume to  A(i)
+            long double sumA=0;
+            for (int ni = 0; ni <cluster_size ; ++ni)//simeio sto idio cluster
+                {
+                if(ni!=vi)
+                    {
+                    long double dist;
+                    if(vi<ni)
+                        {
+                        dist=vect_dist((*cluster_neighbours)[ci][vi]->coord,(*cluster_neighbours)[ci][ni]->coord,no_of_coordinates);
+                        prev_dist[vi][ni]=dist;
+                        }
+                    else
+                        dist=prev_dist[ni][vi];
+
+                    sumA+=dist;
+                    }
+                }
+            long double Avga=sumA/(cluster_size-1);
+
+            //ipologizoume to 2o pio kontino cluster
+            long double nextbestclust_dist;
+            int nextbestclust_ci;
+            //cout<<"ok2"<<endl;
+            for (int nci = 0; nci < cluster_neighbours->size(); ++nci)
+                {
+                if(nci!=ci)
+                    {
+                    int clust=clustersvec->at(nci);
+
+                    if(nci==0||(ci==0 && nci==1))
+                        {
+                        nextbestclust_dist=vect_dist(nvect[clust].coord,(*cluster_neighbours)[ci][vi]->coord,no_of_coordinates);
+                        nextbestclust_ci=nci;
+                        }
+                    else
+                        {
+                        long double dist=vect_dist(nvect[clust].coord,(*cluster_neighbours)[ci][vi]->coord,no_of_coordinates);
+                        if(dist<nextbestclust_dist)
+                            {
+                            nextbestclust_dist=dist;
+                            nextbestclust_ci=nci;
+                            }
+                        }
+                    }
+                }
+            //cout<<"ok3"<<endl;
+            //ipologizoume to b(i)
+            long double sumB=0;
+
+            int Bcluster_size=(*cluster_neighbours)[nextbestclust_ci].size();
+
+            //cout<<"ok4"<<endl;
+            for (int nbvi = 0; nbvi <Bcluster_size ; ++nbvi)//ipologizoume to  B(i)
+                {
+
+                long double dist=vect_dist((*cluster_neighbours)[ci][vi]->coord,(*cluster_neighbours)[nextbestclust_ci][nbvi]->coord,no_of_coordinates);
+                sumB+=dist;
+                }
+            //cout<<"ok5"<<endl;
+            long double Avgb=sumB/Bcluster_size;
+
+            long double si=(Avgb-Avga)/max(Avga,Avgb);//cout<<"si"<<si<<endl;
+            sumSi+=si;
+            }
+        long double AvgSi=sumSi/cluster_size;
+        S->push_back(AvgSi);
+        }
+    return S;
+    }
 //elegxoume an to # twn arguments einai swsto
 int argsOK(int argc, char *argv[])
 {
@@ -237,6 +324,9 @@ int input_handler(int argc, char *argv[],char (&input_file)[256], char (&configu
 		strcpy(method,argv[9]);
 		//diavasma input file 
 		//diavasma configuration file
+        if(handle_conf_file(configuration_file,K_medians,L,k_lsh,M,k_hypercube,probes))
+            return 1;
+
 	}else{
 		strcpy(input_file,argv[2]);
 		strcpy(configuration_file,argv[4]);
@@ -310,6 +400,50 @@ vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no
             
 }
 
+void print_to_file(vector<int>* clustersvec,vector<vector<vec*>>* cluster_neighbours,int complete_flag,char output_file[256],char method[256],int no_of_coordinates,int no_of_vectors,vec* nvectors,double time1, vector<long double>* silhouette_vec){
+
+    ofstream outfile;
+    outfile.open(output_file);
+    outfile<<"Algorithm: ";
+    if(strcmp(method,"Classic")==0)
+        outfile<<"Lloyds"<<endl;
+    else if(strcmp(method,"LSH")==0)
+        outfile<<"Range Search LSH"<<endl;
+    else if(strcmp(method,"Hypercube")==0)
+        outfile<<"Range Search Hypercube"<<endl;
+    for(int i=0;i<clustersvec->size();i++){
+        outfile<<"CLUSTER-"<<i+1<<" {size: "<<(*cluster_neighbours)[i].size()<<", centroid: ";
+        for(int j=0;j<no_of_coordinates;j++){
+            outfile<<nvectors[i].coord[j]<<" ";
+        }
+        outfile<<"}"<<endl;
+    }
+    outfile<<"clustering_time: "<<time1<<endl;
+    outfile<<"Silhouette: [";
+    double sum=0;
+    for(int i=0;i<silhouette_vec->size();i++){
+        sum+=(*silhouette_vec)[i];
+    }
+    sum=sum/silhouette_vec->size();
+    for(int i=0;i<silhouette_vec->size();i++){
+        outfile<<(*silhouette_vec)[i]<<",";
+    }
+    outfile<<sum<<"]";
+    if(complete_flag==1){
+        for(int i=0;i<clustersvec->size();i++){
+        outfile<<"CLUSTER-"<<i+1<<" {size: "<<(*cluster_neighbours)[i].size()<<", centroid: ";
+        for(int j=0;j<no_of_coordinates;j++){
+            outfile<<nvectors[i].coord[j]<<" ";
+        }
+        //outfile<<",";
+       for(int k=0;k<(*cluster_neighbours)[i].size();k++){
+        outfile<<", "<<((*cluster_neighbours)[i])[k]->name;
+        }
+       outfile<<"}";
+        } 
+    }   
+    return;
+}
 
 int main(int argc, char *argv[]){
 	int complete_flag;
@@ -329,16 +463,33 @@ int main(int argc, char *argv[]){
 	if(nvectors==NULL)
 	    return -1;
 	printf("Input:: no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
-	        
+	
+    auto start1 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+
     cluster clus(K_medians,no_of_vectors,no_of_coordinates);
     vector<int>* clustersvec;
     clustersvec=clus.Kmeanplus(nvectors);
     cout<<endl<<clustersvec->size()<<endl;
     vector<vector<vec*>>* cluster_neighbours;
     cluster_neighbours=clus.lloyds(nvectors,clustersvec);
+
+
+    auto stop1 = high_resolution_clock::now();
+    auto duration1 = duration_cast<microseconds>(stop1 - start1);
+    double time1=((double)duration1.count()/1000000);
+
+
     for(int w=0;w<cluster_neighbours->size();w++){
         cout<<(*cluster_neighbours)[w].size()<<endl;
     }
+
+    vector<long double>* silhouette_vec =clus.silhouette(cluster_neighbours,clustersvec,nvectors);
+    for (int i = 0; i < silhouette_vec->size(); ++i)
+        {
+        cout<<"silhouette for cluster: "<<i<<" : "<<(*silhouette_vec)[i]<<endl;
+        }
+
+    print_to_file(clustersvec,cluster_neighbours,complete_flag,output_file,method,no_of_coordinates,no_of_vectors,nvectors,time1,silhouette_vec);
 
 	return 0;
 }
