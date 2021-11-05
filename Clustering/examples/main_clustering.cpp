@@ -421,6 +421,7 @@ void print_to_file(vector<int>* clustersvec,vector<vector<vec*>>* cluster_neighb
     outfile<<"clustering_time: "<<time1<<endl;
     outfile<<"Silhouette: [";
     double sum=0;
+    /*
     for(int i=0;i<silhouette_vec->size();i++){
         sum+=(*silhouette_vec)[i];
     }
@@ -428,7 +429,7 @@ void print_to_file(vector<int>* clustersvec,vector<vector<vec*>>* cluster_neighb
     for(int i=0;i<silhouette_vec->size();i++){
         outfile<<(*silhouette_vec)[i]<<",";
     }
-    outfile<<sum<<"]";
+    outfile<<sum<<"]";*/
     if(complete_flag==1){
         for(int i=0;i<clustersvec->size();i++){
         outfile<<"CLUSTER-"<<i+1<<" {size: "<<(*cluster_neighbours)[i].size()<<", centroid: ";
@@ -482,14 +483,24 @@ int main(int argc, char *argv[]){
     for(int w=0;w<cluster_neighbours->size();w++){
         cout<<(*cluster_neighbours)[w].size()<<endl;
     }
-
+    
     vector<long double>* silhouette_vec =clus.silhouette(cluster_neighbours,clustersvec,nvectors);
     for (int i = 0; i < silhouette_vec->size(); ++i)
         {
         cout<<"silhouette for cluster: "<<i<<" : "<<(*silhouette_vec)[i]<<endl;
         }
 
+
     print_to_file(clustersvec,cluster_neighbours,complete_flag,output_file,method,no_of_coordinates,no_of_vectors,nvectors,time1,silhouette_vec);
 
+    for (int i = 0; i < cluster_neighbours->size(); ++i)
+        {
+        (*cluster_neighbours)[i].clear();
+        }
+    cluster_neighbours->clear();
+    delete cluster_neighbours;
+    delete clustersvec;
+    delete silhouette_vec;
+    delete [] nvectors;
 	return 0;
 }
