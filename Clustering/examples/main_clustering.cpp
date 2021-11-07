@@ -3,11 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <iostream>
-#include <cstring>
 #include <cctype>
-#include <fstream>
-#include <sstream>
 #include <random>
 #include <chrono>
 #include <map>
@@ -15,19 +11,22 @@
 #include <queue>
 #include <bitset>
 #include <algorithm>
-#include <chrono>
+
 
 using namespace std;
-
 using namespace std::chrono;
 
+#include "classes_and_defines.hpp"
+//#include "input_menu_starting_func.hpp"
+#include "lsh_basic_functions.hpp"
+/*
 class vec
 {
 public:
     string name;//to id ths grammhs-dianismatos
     vector <double> coord;
 };
-
+*/
 long double vect_dist(vector<double> vecA,vector<double> vecB,int d)
 {
     long double sum=0;
@@ -322,8 +321,6 @@ int input_handler(int argc, char *argv[],char (&input_file)[256], char (&configu
 			return 1;
 		}
 		strcpy(method,argv[9]);
-		//diavasma input file 
-		//diavasma configuration file
         if(handle_conf_file(configuration_file,K_medians,L,k_lsh,M,k_hypercube,probes))
             return 1;
 
@@ -333,7 +330,6 @@ int input_handler(int argc, char *argv[],char (&input_file)[256], char (&configu
 		strcpy(output_file,argv[6]);
 		(*complete_flag)=0;
 		strcpy(method,argv[8]);
-		//diavasma input file 
 		if(handle_conf_file(configuration_file,K_medians,L,k_lsh,M,k_hypercube,probes))
 			return 1;
 
@@ -382,6 +378,7 @@ vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no
     nvectors = new vec[(*no_of_vectors)];
     while (getline(input,sline))
     {       flag=0;
+            nvectors[counter].clustered_flag=-1;
             stringstream line(sline);
             while(line>> tok) {
                 if(flag==0){
@@ -421,15 +418,17 @@ void print_to_file(vector<int>* clustersvec,vector<vector<vec*>>* cluster_neighb
     outfile<<"clustering_time: "<<time1<<endl;
     outfile<<"Silhouette: [";
     double sum=0;
-    /*
-    for(int i=0;i<silhouette_vec->size();i++){
-        sum+=(*silhouette_vec)[i];
+    if(silhouette_vec!=NULL){
+        
+        for(int i=0;i<silhouette_vec->size();i++){
+            sum+=(*silhouette_vec)[i];
+        }
+        sum=sum/silhouette_vec->size();
+        for(int i=0;i<silhouette_vec->size();i++){
+            outfile<<(*silhouette_vec)[i]<<",";
+        }
+        outfile<<sum<<"]";
     }
-    sum=sum/silhouette_vec->size();
-    for(int i=0;i<silhouette_vec->size();i++){
-        outfile<<(*silhouette_vec)[i]<<",";
-    }
-    outfile<<sum<<"]";*/
     if(complete_flag==1){
         for(int i=0;i<clustersvec->size();i++){
         outfile<<"CLUSTER-"<<i+1<<" {size: "<<(*cluster_neighbours)[i].size()<<", centroid: ";
@@ -452,6 +451,7 @@ int main(int argc, char *argv[]){
 	char input_file[256],configuration_file[256],output_file[256],method[256];
 	vec* nvectors;
 	int no_of_vectors,no_of_coordinates;
+    Lhashtables *lht;
 
 	if(input_handler(argc,argv,input_file,configuration_file,output_file,method,&K_medians,&L,&k_lsh,&M,&k_hypercube,&probes,&complete_flag))
 		return -1;
@@ -465,33 +465,59 @@ int main(int argc, char *argv[]){
 	    return -1;
 	printf("Input:: no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
 	
+    
+    cout<<"Now using Kmeans++"<<endl;
     auto start1 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
-
     cluster clus(K_medians,no_of_vectors,no_of_coordinates);
     vector<int>* clustersvec;
     clustersvec=clus.Kmeanplus(nvectors);
+
     cout<<endl<<clustersvec->size()<<endl;
+
     vector<vector<vec*>>* cluster_neighbours;
-    cluster_neighbours=clus.lloyds(nvectors,clustersvec);
+    if(strcmp(method,"Classic")==0){
+        cout<<"Now using Lloyds"<<endl;
+        cluster_neighbours=clus.lloyds(nvectors,clustersvec);
+    }else if(strcmp(method,"LSH")==0){
+        cout<<"Now using LSH"<<endl;
+        lht=new Lhashtables(L,no_of_coordinates,k_lsh);
+        lht->lsh_start(no_of_vectors,nvectors,clustersvec);
+
+        //EDW KALEIS THN ADISTOIXH LLOYDS GIA NA XWRISEIS TA VECTORS SE CLUSTERS dhladh thn range search
+        //cluster_neighbours=
 
 
+    }else if(strcmp(method,"Hypercube")==0){
+
+        cout<<"Using Hypercube";
+    }else {
+        cout<<"Method: "<<method<<"Not defined :("<<endl;
+        return -1;
+    }
     auto stop1 = high_resolution_clock::now();
     auto duration1 = duration_cast<microseconds>(stop1 - start1);
     double time1=((double)duration1.count()/1000000);
 
-
-    for(int w=0;w<cluster_neighbours->size();w++){
-        cout<<(*cluster_neighbours)[w].size()<<endl;
-    }
-    
-    vector<long double>* silhouette_vec =clus.silhouette(cluster_neighbours,clustersvec,nvectors);
+     cout<<"eftasa";        
+    // for(int w=0;w<cluster_neighbours->size();w++){
+    //     cout<<(*cluster_neighbours)[w].size()<<endl;
+    // }
+    vector<long double>* silhouette_vec=NULL ;
+/*
+    cout<<"Now using silhouette"<<endl;
+    silhouette_vec =clus.silhouette(cluster_neighbours,clustersvec,nvectors);
     for (int i = 0; i < silhouette_vec->size(); ++i)
         {
         cout<<"silhouette for cluster: "<<i<<" : "<<(*silhouette_vec)[i]<<endl;
         }
+    
 
 
     print_to_file(clustersvec,cluster_neighbours,complete_flag,output_file,method,no_of_coordinates,no_of_vectors,nvectors,time1,silhouette_vec);
+
+
+
+
 
     for (int i = 0; i < cluster_neighbours->size(); ++i)
         {
@@ -499,8 +525,13 @@ int main(int argc, char *argv[]){
         }
     cluster_neighbours->clear();
     delete cluster_neighbours;
+    */
+
     delete clustersvec;
-    delete silhouette_vec;
+    if(silhouette_vec!=NULL)
+        delete silhouette_vec;
     delete [] nvectors;
+    if(strcmp(method,"LSH")==0)
+        delete lht;
 	return 0;
 }

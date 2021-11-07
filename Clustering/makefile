@@ -3,4 +3,4 @@ all: main
 main:
 	@echo " Compile cluster...";
 	
-	g++ -o build/cluster examples/main_clustering.cpp
+	g++ -I ./include -o build/cluster examples/main_clustering.cpp src/lsh_basic_functions.cpp
