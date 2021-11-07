@@ -91,6 +91,37 @@ class hashtable
 
 
 
+    class hypercube
+    {
+    private:
+        vector<vector<double>> v;
+        vector<double> t;
+        vector<vector<int>> labels;
 
+        vector<vector<vec*>> cube_vec;
+
+        //int L;//number of hashtables;
+        int d;//dimensions
+        int k;//diastasi pu 8a provalonte ta simeia
+        int M;//maximum cout of points checked
+        int probes;//maximum count of cube_map checked
+        int no_of_vectors;
+        int labels_count;
+        unsigned int powk;
+
+    public:
+        hypercube(int M,int probes,int d ,int k,int no_of_vectors);
+        //~hypercube();
+        void Hashfun_init_cube(void);//initializes tables used for hashing 
+        unsigned int hash_calc(vec* vect);//returns the bin cube vector point
+        int vec_insert(vec* vect);//inserts a vector to the multimap
+        void cube_start(int ,vec*,vector<int>* );
+        //vector<vector<dist_vec>*>* all_NN_search(vec* ,int ,int );
+        //vector<dist_vec>* NN_search(vec*,int);
+        //vector<dist_vec>* RANGE_search(vec* ,double );
+        //vector<vector<dist_vec>*>* all_RANGE_search(vec* ,double ,int );
+        //void cube_map_print();
+    
+    };
 
 #endif

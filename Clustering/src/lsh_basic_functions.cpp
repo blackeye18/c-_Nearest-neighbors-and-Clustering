@@ -1,9 +1,9 @@
 #include <iostream>
 #include <cstring>
-#include <fstream>
-#include <sstream>
 #include <vector>
 #include <cctype>
+#include <fstream>
+#include <sstream>
 #include <random>
 #include <chrono>
 #include <map>
@@ -15,13 +15,13 @@
 
 
 
-
 using namespace std;
 using namespace std::chrono;
 
 #include "classes_and_defines.hpp"
 //#include "input_menu_starting_func.hpp"
 #include "lsh_basic_functions.hpp"
+#include "cube_basic_functions.hpp"
 //#include "knn_ranges_brutes.hpp"
 
 double normal_dist_generator(void)
@@ -198,9 +198,7 @@ int Lhashtables:: lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors,vec
     this->Lhtables[no_of_ht].hashtable_init(tablesize);
     long int g_notablesize;
     for(int i=0;i<no_of_vectors;i++){
-        auto it = find(clustersvec->begin(),clustersvec->end(), i);
-        // EDW THELEI TON ELEGXO NA MHN EINAI CLUSTER
-        //cout<<"it:"<<it<<endl;
+        auto it = find(clustersvec->begin(),clustersvec->end(), i);//elegxos gia an to sygkekrimeno dianisma einai cluster
         if(it==clustersvec->end()){
             for(int ki=0;ki<this->k;ki++){
 

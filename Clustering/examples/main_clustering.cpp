@@ -1,9 +1,9 @@
 #include <iostream>
 #include <cstring>
-#include <fstream>
-#include <sstream>
 #include <vector>
 #include <cctype>
+#include <fstream>
+#include <sstream>
 #include <random>
 #include <chrono>
 #include <map>
@@ -19,6 +19,8 @@ using namespace std::chrono;
 #include "classes_and_defines.hpp"
 //#include "input_menu_starting_func.hpp"
 #include "lsh_basic_functions.hpp"
+#include "cube_basic_functions.hpp"
+//#include "knn_ranges_brutes.hpp"
 /*
 class vec
 {
@@ -451,8 +453,8 @@ int main(int argc, char *argv[]){
 	char input_file[256],configuration_file[256],output_file[256],method[256];
 	vec* nvectors;
 	int no_of_vectors,no_of_coordinates;
-    Lhashtables *lht;
-
+    Lhashtables *lht=NULL;
+    hypercube *cube=NULL;
 	if(input_handler(argc,argv,input_file,configuration_file,output_file,method,&K_medians,&L,&k_lsh,&M,&k_hypercube,&probes,&complete_flag))
 		return -1;
 
@@ -472,12 +474,15 @@ int main(int argc, char *argv[]){
     vector<int>* clustersvec;
     clustersvec=clus.Kmeanplus(nvectors);
 
-    cout<<endl<<clustersvec->size()<<endl;
+    cout<<endl<<clustersvec->size()<<endl;//afto prepei na fygei otan teleiwsoume
 
     vector<vector<vec*>>* cluster_neighbours;
+
     if(strcmp(method,"Classic")==0){
+
         cout<<"Now using Lloyds"<<endl;
         cluster_neighbours=clus.lloyds(nvectors,clustersvec);
+
     }else if(strcmp(method,"LSH")==0){
         cout<<"Now using LSH"<<endl;
         lht=new Lhashtables(L,no_of_coordinates,k_lsh);
@@ -486,12 +491,18 @@ int main(int argc, char *argv[]){
         //EDW KALEIS THN ADISTOIXH LLOYDS GIA NA XWRISEIS TA VECTORS SE CLUSTERS dhladh thn range search
         //cluster_neighbours=
 
-
     }else if(strcmp(method,"Hypercube")==0){
+        cout<<"Now using Hypercube"<<endl;
+        cube=new hypercube(M,probes,no_of_coordinates,k_hypercube,no_of_vectors);
+        cube->cube_start(no_of_vectors,nvectors,clustersvec);
 
-        cout<<"Using Hypercube";
+        //EDW KALEIS THN ADISTOIXH LLOYDS GIA NA XWRISEIS TA VECTORS SE CLUSTERS dhladh thn range search
+        //cluster_neighbours=
+
     }else {
-        cout<<"Method: "<<method<<"Not defined :("<<endl;
+        cout<<"Method: "<<method<<" Not defined :("<<endl;
+        delete clustersvec;
+        delete [] nvectors;
         return -1;
     }
     auto stop1 = high_resolution_clock::now();
@@ -526,12 +537,14 @@ int main(int argc, char *argv[]){
     cluster_neighbours->clear();
     delete cluster_neighbours;
     */
-
+    
     delete clustersvec;
     if(silhouette_vec!=NULL)
         delete silhouette_vec;
     delete [] nvectors;
     if(strcmp(method,"LSH")==0)
         delete lht;
+    if(strcmp(method,"Hypercube")==0)
+        delete cube;
 	return 0;
 }
