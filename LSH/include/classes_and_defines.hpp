@@ -9,15 +9,15 @@ const string metric = "euclidean_distance";
 
 
 
-class vec
+class vec//klash gia na filame to ka8e vector
 {
 public:
     string name;//to id ths grammhs-dianismatos
-    vector <double> coord;
+    vector <double> coord;//sintetagmenes simeiou
 };
 
 
-class dist_vec
+class dist_vec//tuple me apostasi kai to vec
     {public:
     long double dist;
     vec* vect;
@@ -30,7 +30,7 @@ class dist_vec
 
 
 
-struct pqcompare
+struct pqcompare//sinartisi sigkrisis gia priority queu
     {
     bool operator()(dist_vec const& NN1, dist_vec const& NN2)
         {
@@ -38,30 +38,30 @@ struct pqcompare
         }
     };
 
-class node
+class node//domh node gia ta hashtables
     {
     public:
-        long long hashvalue;
-        int id;
-        vec* vect=NULL;
-        node* next=NULL;
+        long long hashvalue;//timi hash prin to mod
+        int id;//timh hash meta to mod
+        vec* vect=NULL;//vec autou toou node
+        node* next=NULL;//epomeno vec
     };
 
 
-class hashtable
+class hashtable//klash gia hashtable
     {
     protected:
         node** buckets=NULL;//array me ta buckets
         int bucket_count;//ari8mos buckets
-        int total_nodes;
-        int initialized;
+        int total_nodes;//sinolikos ari8mos nodes ara kai vec
+        int initialized;//1 an arxikopii8ike 0 an den
     public:
-        hashtable(void); // plithos bucket
-        void hashtable_init(int);
+        hashtable(void); // constructor
+        void hashtable_init(int);//initializer
         int hashtable_insert(vec* ,long );//eisagwgh 
-        void hashtable_print();
-        node* search_nd(long);
-        ~hashtable(void);
+        void hashtable_print();//xrisimopii8ike mono gia debugging
+        node* search_nd(long);//epistrefei to arxiko node tu bucket me to antistixo hvalue
+        ~hashtable(void);//destructor
     };
 
 
@@ -71,7 +71,12 @@ class hashtable
         hashtable* Lhtables=NULL;//array me ta hashtables
         int L;//number of hashtables;
         int d;//dimensions
-        int k;
+        int k;//number of hash functions
+        /*
+        h(p)=floor((p*v+t)/w)
+        p=point
+        v=
+        */
         vector<vector<vector<double>>> v;
         vector<vector<double>> t;
         vector<vector<int>> r;
