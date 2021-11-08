@@ -514,7 +514,7 @@ int main(int argc, char *argv[]){
      }
      cout<<tempsum<<endl;
     vector<long double>* silhouette_vec=NULL ;
-
+/*
     cout<<"Now using silhouette"<<endl;
     silhouette_vec =clus.silhouette(cluster_neighbours,clustersvec,nvectors);
     for (int i = 0; i < silhouette_vec->size(); ++i)
@@ -522,7 +522,7 @@ int main(int argc, char *argv[]){
         cout<<"silhouette for cluster: "<<i<<" : "<<(*silhouette_vec)[i]<<endl;
         }
     
-
+*/
 
 
     print_to_file(clustersvec,cluster_neighbours,complete_flag,output_file,method,no_of_coordinates,no_of_vectors,nvectors,time1,silhouette_vec);

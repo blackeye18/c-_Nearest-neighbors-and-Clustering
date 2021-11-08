@@ -4,7 +4,7 @@
 #define RLIMIT 1000
 #define PNUM 4294967291
 #define W 4//meta3i 0 kai 6
-#define BUCKET_RATIO 16
+#define BUCKET_RATIO 32
 const string metric = "euclidean_distance";
 
 
