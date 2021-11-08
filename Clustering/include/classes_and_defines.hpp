@@ -25,7 +25,7 @@ class dist_vec
     dist_vec(long double dist, vec* vect)
        : dist(dist), vect(vect)
         {};
-    ~dist_vec(void);
+    //~dist_vec(void);
     };
 
 
@@ -81,6 +81,8 @@ class hashtable
         void Hashfun_init(void);
         int lsh_start(int,vec*,vector<int>* );
         int lsh_continue(int,int,vec*,vector<int>* );
+        int Cluster_LRadius(vec* cvector,long int g_notablesize[],double radius,int clust_num,vector<vector<dist_vec>> *curr_clust_vec,int iteration);
+        vector<vector<vec*>>* ANN_lsh(vec* nvect,vector<int>* clustersvec,int no_of_vectors);
         //vector<dist_vec>* NN_search(vec*,int);
         //vector<vector<dist_vec>*>* find_k_nearest(vec* ,int ,int );
        //vector<dist_vec>* LRadius_search(vec* ,double );

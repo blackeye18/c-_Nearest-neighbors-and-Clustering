@@ -24,6 +24,16 @@ using namespace std::chrono;
 #include "cube_basic_functions.hpp"
 //#include "knn_ranges_brutes.hpp"
 
+long double vect_dist(vector<double> vecA,vector<double> vecB,int d)
+{
+    long double sum=0;
+    for (int i = 0; i < d; ++i)
+        {
+        long double temp=abs(vecA[i]-vecB[i]);
+        sum+=temp*temp;
+        }
+    return sqrt(sum);
+}
 double normal_dist_generator(void)
     {
     std::random_device rd{};
@@ -93,7 +103,16 @@ void hashtable::hashtable_print()
         }
                  
     }
-
+node* hashtable::search_nd(long hvalue)
+    {
+    int id=hvalue%bucket_count;
+    if(buckets!=NULL)
+        {
+        if(buckets[id]!=NULL)
+            return buckets[id];
+        }
+    return NULL;
+    }
 hashtable::~hashtable()
     {
     if(buckets!=NULL)
@@ -228,15 +247,200 @@ int Lhashtables:: lsh_start(int no_of_vectors,vec *nvectors,vector<int>* cluster
         }
 
     }
-    /*
-    cout<<endl<<endl<<endl<<"PRINTING HASHTABLES:"<<endl;
-    for(int i=0;i<L;i++){
-        cout<<"hashtable "<<i<<endl;
-        this->Lhtables[i].hashtable_print();
-        cout<<endl<<endl;
-    }
-*/
+    return 0;
+}
+
+int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double radius,int clust_num,vector<vector<dist_vec>> *curr_clust_vec,int iteration)
+    {
+    int counter=0;
+
+    for (int li = 0; li < L; li++)
+        {
+        node* currnode=Lhtables[li].search_nd(g_notablesize[li]);
+        int nn=0;
+        while(currnode!=NULL)
+            {
+            nn++;
+            if(currnode->vect!=NULL)
+                {
+                counter++;
+                int clustered_flag=currnode->vect->clustered_flag;
+                if(clustered_flag==-1||clustered_flag==iteration)
+                    {
+                    if(metric=="euclidean_distance")
+                        {
+
+                        long double dist=vect_dist(cvector->coord,currnode->vect->coord,d);
+                        if(dist<radius)
+                            {
+                            int push_flag=1;
+                            if(clustered_flag==iteration)
+                                {
+                                int found=0;
+                                for (int ci = 0; ci < clust_num; ++ci)
+                                    {
+                                    for (int vi = 0; vi < (*curr_clust_vec)[ci].size(); ++vi)
+                                        {
+                                        if((*curr_clust_vec)[ci][vi].vect==currnode->vect)
+                                            {
+                                            found=1;
+                                            if((*curr_clust_vec)[ci][vi].dist<=dist)
+                                                {
+                                                push_flag=0;
+                                                }
+                                            else
+                                                (*curr_clust_vec)[ci].erase((*curr_clust_vec)[ci].begin() + vi);
+
+                                            break;
+                                            }
+                                        }
+                                    if(found){break;}
+                                    }
+                                }
+
+                            if(push_flag)
+                                {
+                                currnode->vect->clustered_flag=iteration;
+                                (*curr_clust_vec)[clust_num].push_back(dist_vec(dist,currnode->vect));
+                                }
+                            }
+
+                        }
+                    else
+                        {
+                        cout<<"No function for metric:"<<metric<<endl;
+                        return 1;
+                        }
+                    }
+                }
+            else
+                cout<<"NULL vect found"<<endl;
+
+            currnode=currnode->next;    
+            }
+        //cout<<"BUcket of "<<li<<" hashtable "<<"num of nodes "<<nn<<endl;;
+        }
     return 0;
 
-}
+    }
+vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<int>* clustersvec,int no_of_vectors)
+    {
+    //ipologizoume to radi= mindist meta3i 2 cluster /2
+    int cluster_num=clustersvec->size();
+    long double mindist=999999999999999;
+    cout<<"ANN1"<<endl;
+    for (int ca = 0; ca < cluster_num-1; ++ca)
+        {
+        for (int cb = ca+1 ; cb <cluster_num;  cb++)
+            {
+            int clusta=clustersvec->at(ca);
+            int clustb=clustersvec->at(cb);
+
+            long double dist=vect_dist(nvect[clusta].coord,nvect[clustb].coord,d);
+            if(dist<=mindist)
+                mindist==dist;
+            }
+        }
+
+    long double radii=mindist/2;
+
+    cout<<"ANN2"<<endl;
+    long int g_notablesize[cluster_num][this->L];
+    int h_return;
+    int h[cluster_num][k];
+    for (int ci = 0; ci < cluster_num; ++ci)
+        {
+        for (int li = 0; li < L; li++)
+            {
+            for(int ki=0;ki<this->k;ki++)
+                {
+                int clust=clustersvec->at(ci);
+                h_return=h_function(nvect[clust].coord,this->v[li][ki],this->t[li][ki]);
+                h[ci][ki]=h_return;
+                //cout<<"H Function Return:"<<h[ki]<<endl;
+                }
+            //cout<<"calling g function"<<endl;
+            g_notablesize[ci][li]=g_function(h[ci],this->r[li],this->k);
+            }
+        }
+
+    int iteration=0;
+    int total_found=0;
+
+    vector<vector<vec*>>* cluster_neighbours=new vector<vector<vec*>>;
+    cluster_neighbours->resize(clustersvec->size(),vector<vec*>(0));
+
+    vector<vector<dist_vec>> *curr_clust_vec=new vector<vector<dist_vec>>;
+    curr_clust_vec->resize(cluster_num,vector<dist_vec>());
+    int vectors_found;
+    cout<<"ANN3"<<endl;
+    do
+        {
+        //cout<<"ANNdowhile"<<endl;
+
+        for (int ci = 0; ci < cluster_num; ++ci)
+            {
+          //  cout<<"ANNfora"<<endl;
+            int clust=clustersvec->at(ci);
+
+            int abc=this->Cluster_LRadius(&nvect[clust],g_notablesize[ci],radii,ci,curr_clust_vec,iteration);
+            }
+       // cout<<"ANN3.5"<<endl;
+        vectors_found=0;
+        for (int ci = 0; ci < cluster_num; ++ci)
+            {
+            //cout<<"ANNfor2"<<endl;
+            for (int vi = 0; vi < (*curr_clust_vec)[ci].size(); ++vi)
+                {
+                vectors_found++;
+                (*cluster_neighbours)[ci].push_back((*curr_clust_vec)[ci][vi].vect);
+                }
+
+            (*curr_clust_vec)[ci].clear();
+            }
+
+        total_found+=vectors_found;
+        iteration++;
+        radii*=2;
+        }
+    while(vectors_found>=cluster_num/2);
+
+    delete curr_clust_vec;
+    cout<<"ANN4"<<endl;
+    if(total_found<no_of_vectors)
+        {
+        cout<<"entering brute with total_found "<<total_found<<endl;
+        for (int i = 0; i < no_of_vectors; ++i)
+            {
+            if(nvect[i].clustered_flag==-1)
+                {
+                total_found++;
+                long double mdist;
+                int mci;
+                for (int ci = 0; ci < cluster_num; ++ci)
+                    {
+                    int clust=clustersvec->at(ci);
+                    if(ci==0)
+                        {
+                        mdist=vect_dist(nvect[clust].coord,nvect[i].coord,d);
+                        mci=0;
+                        }
+                    else
+                        {
+                        long double dist=vect_dist(nvect[clust].coord,nvect[i].coord,d);
+                        if (dist<mdist)
+                            {
+                            mdist=dist;
+                            mci=ci;
+                            }
+                        }
+                    }
+                (*cluster_neighbours)[mci].push_back(&nvect[i]);
+                }
+            //if(total_found==no_of_vectors-5){break;}
+            }
+
+        }
+    return cluster_neighbours;
+    }
 

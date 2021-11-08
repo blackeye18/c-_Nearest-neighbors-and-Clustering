@@ -2,6 +2,7 @@
 #define __lsh_basic_functions__
 
 double normal_dist_generator(void);
+long double vect_dist(vector<double> vecA,vector<double> vecB,int d);
 //hashtable::hashtable();
 //void hashtable::hashtable_init(int bnum);
 //int hashtable:: hashtable_insert(vec* nvec, long hvalue);

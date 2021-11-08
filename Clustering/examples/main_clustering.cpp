@@ -29,16 +29,7 @@ public:
     vector <double> coord;
 };
 */
-long double vect_dist(vector<double> vecA,vector<double> vecB,int d)
-{
-    long double sum=0;
-    for (int i = 0; i < d; ++i)
-        {
-        long double temp=abs(vecA[i]-vecB[i]);
-        sum+=temp*temp;
-        }
-    return sqrt(sum);
-}
+
 
 class cluster
     {
@@ -70,7 +61,9 @@ vector<int>* cluster::Kmeanplus(vec* nvect)
     std::uniform_int_distribution<int>  distrC(0,no_of_vectors-1);
 
     vector<int>* clusters=new vector<int>;
-    clusters->push_back(distrC(e));
+    int first_clust=distrC(e);
+    nvect[first_clust].clustered_flag=-2;
+    clusters->push_back(first_clust);
     vector<long double> partial_sums; 
     vector<int> r;
 
@@ -116,7 +109,7 @@ vector<int>* cluster::Kmeanplus(vec* nvect)
         if(position>0)
             if(partial_sums[position-1]>=X)
                 position--;
-
+            nvect[r[position]].clustered_flag=-2;
         clusters->push_back(r[position]);
         }
     return clusters;
@@ -475,6 +468,10 @@ int main(int argc, char *argv[]){
     clustersvec=clus.Kmeanplus(nvectors);
 
     cout<<endl<<clustersvec->size()<<endl;//afto prepei na fygei otan teleiwsoume
+    for(int i=0; i<clustersvec->size();i++){
+        int temp=clustersvec->at(i);
+        cout<<nvectors[temp].name<<endl;
+    }
 
     vector<vector<vec*>>* cluster_neighbours;
 
@@ -489,7 +486,7 @@ int main(int argc, char *argv[]){
         lht->lsh_start(no_of_vectors,nvectors,clustersvec);
 
         //EDW KALEIS THN ADISTOIXH LLOYDS GIA NA XWRISEIS TA VECTORS SE CLUSTERS dhladh thn range search
-        //cluster_neighbours=
+        cluster_neighbours=lht->ANN_lsh(nvectors,clustersvec,no_of_vectors);
 
     }else if(strcmp(method,"Hypercube")==0){
         cout<<"Now using Hypercube"<<endl;
@@ -510,11 +507,14 @@ int main(int argc, char *argv[]){
     double time1=((double)duration1.count()/1000000);
 
      cout<<"eftasa";        
-    // for(int w=0;w<cluster_neighbours->size();w++){
-    //     cout<<(*cluster_neighbours)[w].size()<<endl;
-    // }
+     int tempsum=0;
+     for(int w=0;w<cluster_neighbours->size();w++){
+        tempsum+=(*cluster_neighbours)[w].size();
+        cout<<(*cluster_neighbours)[w].size()<<endl;
+     }
+     cout<<tempsum<<endl;
     vector<long double>* silhouette_vec=NULL ;
-/*
+
     cout<<"Now using silhouette"<<endl;
     silhouette_vec =clus.silhouette(cluster_neighbours,clustersvec,nvectors);
     for (int i = 0; i < silhouette_vec->size(); ++i)
@@ -522,6 +522,7 @@ int main(int argc, char *argv[]){
         cout<<"silhouette for cluster: "<<i<<" : "<<(*silhouette_vec)[i]<<endl;
         }
     
+
 
 
     print_to_file(clustersvec,cluster_neighbours,complete_flag,output_file,method,no_of_coordinates,no_of_vectors,nvectors,time1,silhouette_vec);
@@ -536,7 +537,7 @@ int main(int argc, char *argv[]){
         }
     cluster_neighbours->clear();
     delete cluster_neighbours;
-    */
+    
     
     delete clustersvec;
     if(silhouette_vec!=NULL)
