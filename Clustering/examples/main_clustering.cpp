@@ -16,6 +16,8 @@
 using namespace std;
 using namespace std::chrono;
 
+#define PERCISION 0.01
+#define MAXIT 50
 #include "classes_and_defines.hpp"
 //#include "input_menu_starting_func.hpp"
 #include "lsh_basic_functions.hpp"
@@ -30,6 +32,26 @@ public:
 };
 */
 
+
+ long double Mean_coord(vector<vec*> nvects,vec*  cvec,int d)
+ 	{
+ 	long double Avg_diff=0;
+ 	long double Sum_diff=0;
+ 	for (int di = 0; di < d; ++di)
+ 		{
+ 		double sum=0;
+ 		for (int ni = 0; ni < nvects.size(); ++ni)
+ 			{
+ 			sum+=nvects[ni]->coord[di];
+ 			}
+
+ 		double Avg=sum/nvects.size();
+ 		Sum_diff+=abs(cvec->coord[di]-Avg);
+ 		cvec->coord[di]=Avg;
+ 		}
+ 	Avg_diff=Sum_diff/d;
+ 	return Avg_diff;
+ 	}
 
 class cluster
     {
@@ -46,50 +68,67 @@ class cluster
 
     public:
         cluster(int,int,int);
-        vector<int>* Kmeanplus(vec* nvect);
-        vector<vector<vec*>>* lloyds(vec* nvect,vector<int>* clustersvec);
-        vector<long double>* silhouette(vector<vector<vec*>>* cluster_neighbours,vector<int>* clustersvec,vec* nvect);
+        vector<vec>* Kmeanplus(vec* nvect);
+        vector<vector<vec*>>* lloyds(vec* nvect,vector<vec>* clustersvec);
+        vector<vector<vec*>>* repeat(vec* nvect,vector<vec>* clustersvec,int method,void* ss);
+        vector<long double>* silhouette(vector<vector<vec*>>* cluster_neighbours,vector<vec>* clustersvec,vec* nvect);
     };
 
 cluster::cluster(int K_medians,int no_of_vectors,int no_of_coordinates)
 :K_medians(K_medians),no_of_vectors(no_of_vectors),no_of_coordinates(no_of_coordinates){};
 
-vector<int>* cluster::Kmeanplus(vec* nvect)
+vector<vec>* cluster::Kmeanplus(vec* nvect)
     {
     unsigned seed=std::chrono::steady_clock::now().time_since_epoch().count();
     default_random_engine e(seed);
     std::uniform_int_distribution<int>  distrC(0,no_of_vectors-1);
 
-    vector<int>* clusters=new vector<int>;
+    //vector<int>* clusters=new vector<int>;
     int first_clust=distrC(e);
-    nvect[first_clust].clustered_flag=-2;
-    clusters->push_back(first_clust);
+    //nvect[first_clust].clustered_flag=-2;
+    vector<vec>*clusters=new vector<vec>;
+    clusters->resize(K_medians);
+    int counter=0;
+    //vec* temp_vect=new vec[K_medians];
+
+    for(int i=0;i<K_medians;i++)
+        (clusters->at(i)).coord.resize(no_of_coordinates);
+
+    (clusters->at(counter)).coord=nvect[first_clust].coord;
+
+    counter++;
+    //clusters->push_back(first_clust);
     vector<long double> partial_sums; 
     vector<int> r;
 
-    while(clusters->size()<K_medians)
+    while(counter<K_medians)
         {
         r.clear();
         partial_sums.clear();
         long double sum=0;
         for (int i = 0; i < no_of_vectors; ++i)
             {
-            auto it = find(clusters->begin(),clusters->end(), i);
-            if(it==clusters->end())
+            //auto it = find(clusters->begin(),clusters->end(), i);
+            int tempflag=0;
+            for(int k=0;k<counter;k++){
+                if(nvect[i].coord==(clusters->at(counter)).coord)
+                    tempflag=1;
+            }
+            if(tempflag==0)
                 {
                 long double mdist;
                 int mci;
-                for (int ci = 0; ci < clusters->size(); ++ci)
+                for (int ci = 0; ci < counter; ++ci)
                     {
-                    int clust=clusters->at(ci);
+                    //int clust=clusters->at(ci);
                     if(ci==0)
                         {
-                        mdist=vect_dist(nvect[clust].coord,nvect[i].coord,no_of_coordinates);
+                        mdist=vect_dist((clusters->at(counter)).coord,nvect[i].coord,no_of_coordinates);
                         mci=0;
                         }
                     else
                         {
-                        long double dist=vect_dist(nvect[clust].coord,nvect[i].coord,no_of_coordinates);
+                        long double dist=vect_dist((clusters->at(counter)).coord,nvect[i].coord,no_of_coordinates);
                         if (dist<mdist)
                             {
                             mdist=dist;
@@ -109,47 +148,101 @@ vector<int>* cluster::Kmeanplus(vec* nvect)
         if(position>0)
             if(partial_sums[position-1]>=X)
                 position--;
-            nvect[r[position]].clustered_flag=-2;
-        clusters->push_back(r[position]);
+            //nvect[r[position]].clustered_flag=-2;
+        //clusters->push_back(r[position]);
+        (clusters->at(counter)).coord=nvect[r[position]].coord;
+        counter++;
         }
     return clusters;
     }
-vector<vector<vec*>>* cluster::lloyds(vec* nvect,vector<int>* clustersvec)
+
+
+vector<vector<vec*>>* cluster::lloyds(vec* nvect,vector<vec>* clustersvec)
     {
     vector<vector<vec*>>* lloydsclust=new vector<vector<vec*>>;
     lloydsclust->resize(clustersvec->size(),vector<vec*>(0));
 
     for (int i = 0; i < no_of_vectors; ++i)
         {
-        auto it = find(clustersvec->begin(),clustersvec->end(), i);
-        if(it==clustersvec->end())
+
+        long double mdist;
+        int mci;
+        for (int ci = 0; ci < clustersvec->size(); ++ci)
             {
-            long double mdist;
-            int mci;
-            for (int ci = 0; ci < clustersvec->size(); ++ci)
+
+            if(ci==0)
                 {
-                int clust=clustersvec->at(ci);
-                if(ci==0)
+                mdist=vect_dist(clustersvec->at(ci).coord,nvect[i].coord,no_of_coordinates);
+                mci=0;
+                }
+            else
+                {
+                long double dist=vect_dist(clustersvec->at(ci).coord,nvect[i].coord,no_of_coordinates);
+                if (dist<mdist)
                     {
-                    mdist=vect_dist(nvect[clust].coord,nvect[i].coord,no_of_coordinates);
-                    mci=0;
-                    }
-                else
-                    {
-                    long double dist=vect_dist(nvect[clust].coord,nvect[i].coord,no_of_coordinates);
-                    if (dist<mdist)
-                        {
-                        mdist=dist;
-                        mci=ci;
-                        }
+                    mdist=dist;
+                    mci=ci;
                     }
                 }
-            ((*lloydsclust)[mci]).push_back(&(nvect[i]));
             }
+        ((*lloydsclust)[mci]).push_back(&(nvect[i]));  
         }
     return lloydsclust;
     }
-vector<long double>* cluster::silhouette(vector<vector<vec*>>* cluster_neighbours,vector<int>* clustersvec,vec* nvect)
+/*BLACK EYE TSEKARE*/
+vector<vector<vec*>>* cluster::repeat(vec* nvect,vector<vec>* clustersvec,int method,void* ss)
+	{
+	vector<vector<vec*>>* cluster_neighbours=NULL;
+	long double diff=0;
+	int iteration=0;
+	do
+		{
+		iteration++;
+		//to kanw free an den ine NULL
+		if(cluster_neighbours!=NULL)
+			{
+			for (int ci = 0; ci < cluster_neighbours->size(); ++ci)
+        		{
+        		(*cluster_neighbours)[ci].clear();
+        		}
+    		cluster_neighbours->clear();
+    		delete cluster_neighbours;
+    		cluster_neighbours=NULL;
+			}
+
+		long double sum_diff=0;
+		//analoga me tin methodo vazume ta simeia sta clusters
+		if(method==0)
+			{
+			cluster_neighbours=this->lloyds(nvect,clustersvec);
+			}
+		else if(method==1)
+			{
+			Lhashtables* lhtables=(Lhashtables*) ss;
+			cluster_neighbours=lhtables->ANN_lsh(nvect,clustersvec,no_of_vectors);
+			}
+		else if (method==2)
+			{
+			//edw ine gia hypercube
+            hypercube* hcube=(hypercube*) ss;
+            cluster_neighbours=hcube->ANN_cube(nvect,clustersvec,no_of_vectors);
+			}
+
+		//vriskume ta nea clusters
+		for (int ci = 0; ci < clustersvec->size(); ++ci)
+			{
+
+			sum_diff+=Mean_coord(cluster_neighbours->at(ci),&(clustersvec->at(ci)),no_of_coordinates);
+
+			//cout<<clustersvec->at(ci).coord[ci]<<endl;
+			}
+			
+		diff=sum_diff/clustersvec->size();cout<<"diff "<<diff<<endl;
+		}
+	while(diff>=PERCISION && iteration<MAXIT);
+	return cluster_neighbours;
+	}
+vector<long double>* cluster::silhouette(vector<vector<vec*>>* cluster_neighbours,vector<vec>* clustersvec,vec* nvect)
     {
     vector<long double>* S=new vector<long double>;
 
@@ -191,16 +284,16 @@ vector<long double>* cluster::silhouette(vector<vector<vec*>>* cluster_neighbour
                 {
                 if(nci!=ci)
                     {
-                    int clust=clustersvec->at(nci);
+                    //int clust=clustersvec->at(nci);
 
                     if(nci==0||(ci==0 && nci==1))
                         {
-                        nextbestclust_dist=vect_dist(nvect[clust].coord,(*cluster_neighbours)[ci][vi]->coord,no_of_coordinates);
+                        nextbestclust_dist=vect_dist(clustersvec->at(nci).coord,(*cluster_neighbours)[ci][vi]->coord,no_of_coordinates);
                         nextbestclust_ci=nci;
                         }
                     else
                         {
-                        long double dist=vect_dist(nvect[clust].coord,(*cluster_neighbours)[ci][vi]->coord,no_of_coordinates);
+                        long double dist=vect_dist(clustersvec->at(nci).coord,(*cluster_neighbours)[ci][vi]->coord,no_of_coordinates);
                         if(dist<nextbestclust_dist)
                             {
                             nextbestclust_dist=dist;
@@ -392,7 +485,7 @@ vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no
             
 }
 
-void print_to_file(vector<int>* clustersvec,vector<vector<vec*>>* cluster_neighbours,int complete_flag,char output_file[256],char method[256],int no_of_coordinates,int no_of_vectors,vec* nvectors,double time1, vector<long double>* silhouette_vec){
+void print_to_file(vector<vec>* clustersvec,vector<vector<vec*>>* cluster_neighbours,int complete_flag,char output_file[256],char method[256],int no_of_coordinates,int no_of_vectors,vec* nvectors,double time1, vector<long double>* silhouette_vec){
 
     ofstream outfile;
     outfile.open(output_file);
@@ -463,38 +556,43 @@ int main(int argc, char *argv[]){
     
     cout<<"Now using Kmeans++"<<endl;
     auto start1 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+
     cluster clus(K_medians,no_of_vectors,no_of_coordinates);
-    vector<int>* clustersvec;
+    vector<vec>* clustersvec;
     clustersvec=clus.Kmeanplus(nvectors);
 
-    cout<<endl<<clustersvec->size()<<endl;//afto prepei na fygei otan teleiwsoume
+
+   cout<<endl<<clustersvec->size()<<endl;//afto prepei na fygei otan teleiwsoume
     for(int i=0; i<clustersvec->size();i++){
-        int temp=clustersvec->at(i);
-        cout<<nvectors[temp].name<<endl;
+        //int temp=clustersvec->at(i);
+        for(int j=0;j<no_of_coordinates;j++)
+            cout<<(clustersvec->at(i)).coord.at(j)<<" ";
+        cout<<endl;
     }
 
     vector<vector<vec*>>* cluster_neighbours;
 
-    if(strcmp(method,"Classic")==0){
+    if( strcmp(method,"Classic")==0){
 
         cout<<"Now using Lloyds"<<endl;
-        cluster_neighbours=clus.lloyds(nvectors,clustersvec);
+        //cluster_neighbours=clus.lloyds(nvectors,clustersvec);
+        cluster_neighbours=clus.repeat(nvectors,clustersvec,0,NULL);
 
     }else if(strcmp(method,"LSH")==0){
         cout<<"Now using LSH"<<endl;
         lht=new Lhashtables(L,no_of_coordinates,k_lsh);
-        lht->lsh_start(no_of_vectors,nvectors,clustersvec);
+        lht->lsh_start(no_of_vectors,nvectors);
 
         //EDW KALEIS THN ADISTOIXH LLOYDS GIA NA XWRISEIS TA VECTORS SE CLUSTERS dhladh thn range search
-        cluster_neighbours=lht->ANN_lsh(nvectors,clustersvec,no_of_vectors);
+        cluster_neighbours=clus.repeat(nvectors,clustersvec,1,(void*)lht);
 
     }else if(strcmp(method,"Hypercube")==0){
         cout<<"Now using Hypercube"<<endl;
         cube=new hypercube(M,probes,no_of_coordinates,k_hypercube,no_of_vectors);
-        cube->cube_start(no_of_vectors,nvectors,clustersvec);
+        cube->cube_start(no_of_vectors,nvectors);
 
         //EDW KALEIS THN ADISTOIXH LLOYDS GIA NA XWRISEIS TA VECTORS SE CLUSTERS dhladh thn range search
-        //cluster_neighbours=
+        cluster_neighbours=clus.repeat(nvectors,clustersvec,2,(void*)cube);
 
     }else {
         cout<<"Method: "<<method<<" Not defined :("<<endl;
@@ -506,13 +604,13 @@ int main(int argc, char *argv[]){
     auto duration1 = duration_cast<microseconds>(stop1 - start1);
     double time1=((double)duration1.count()/1000000);
 
-     cout<<"eftasa";        
+     cout<<"eftasa"<<endl;        
      int tempsum=0;
      for(int w=0;w<cluster_neighbours->size();w++){
         tempsum+=(*cluster_neighbours)[w].size();
-        cout<<(*cluster_neighbours)[w].size()<<endl;
+        cout<<"clust "<<w<<" "<<(*cluster_neighbours)[w].size()<<endl;
      }
-     cout<<tempsum<<endl;
+     cout<<"sum "<<tempsum<<endl;
     vector<long double>* silhouette_vec=NULL ;
 /*
     cout<<"Now using silhouette"<<endl;
@@ -547,5 +645,7 @@ int main(int argc, char *argv[]){
         delete lht;
     if(strcmp(method,"Hypercube")==0)
         delete cube;
+
+
 	return 0;
 }

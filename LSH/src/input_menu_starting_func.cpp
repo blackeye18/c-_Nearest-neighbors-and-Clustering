@@ -207,7 +207,7 @@ void print_vectors(vec *nvectors,int no_of_vectors,int no_of_coordinates){
 }
 
 
-int print_to_file(char output_file[256],string lsh_or_hypercube,vector<vector<dist_vec>*>* dsvec2,int queries_no_of_vectors,vec* qvectors,double time_lsh,double time_true,vector<vector<dist_vec>*>* dsvec3,vector<vector<dist_vec>*>* dsvec4,double R){
+int print_to_file(char output_file[256],string lsh_or_hypercube,vector<vector<dist_vec>*>* dsvec2,int queries_no_of_vectors,vec* qvectors,double *time_per_query_lsh,double *time_per_query_brute,vector<vector<dist_vec>*>* dsvec3,vector<vector<dist_vec>*>* dsvec4,double R){
     ofstream outfile;
     outfile.open(output_file);
 
@@ -234,8 +234,8 @@ int print_to_file(char output_file[256],string lsh_or_hypercube,vector<vector<di
         
     
         outfile<<"tLSH: ";
-        outfile<<time_lsh<<endl;
-        outfile<<"tTrue: "<<time_true<<endl;
+        outfile<<time_per_query_lsh[i]<<endl;
+        outfile<<"tTrue: "<<time_per_query_brute[i]<<endl;
         outfile<<R<<"-near neighbours:"<<endl;//den kserw an thelei R h thelei to noumero tou R
 
         vector<dist_vec>* dstemp4 =(*dsvec4)[i];

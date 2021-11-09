@@ -60,7 +60,7 @@ class hypercube
         unsigned int hash_calc(vec* vect);//returns the bin cube vector point
         int vec_insert(vec* vect);//inserts a vector to the multimap
         void cube_start(int ,vec*);
-        vector<vector<dist_vec>*>* all_NN_search(vec* ,int ,int );
+        vector<vector<dist_vec>*>* all_NN_search(vec* ,int ,int,double* );
         vector<dist_vec>* NN_search(vec*,int);
         vector<dist_vec>* RANGE_search(vec* ,double );
         vector<vector<dist_vec>*>* all_RANGE_search(vec* ,double ,int );

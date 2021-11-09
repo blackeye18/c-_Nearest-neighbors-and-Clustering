@@ -123,18 +123,235 @@ int hypercube::vec_insert(vec* vect)
     return 0;
     }
 
-void hypercube::cube_start(int no_of_vectors,vec*nvectors,vector<int>* clustersvec){
+void hypercube::cube_start(int no_of_vectors,vec*nvectors){
 	powk=pow(2,k);
 	this->Hashfun_init_cube();
 	int ret=0;
 	for(int i=0;i<no_of_vectors;i++){
-        auto it = find(clustersvec->begin(),clustersvec->end(), i);//elegxos gia an to sygkekrimeno dianisma einai cluster
-        if(it==clustersvec->end()){
-    		ret=vec_insert(&(nvectors[i]));
-    		if(ret!=0){
-                cout<<"Something went wrong with vec_insert"<<endl;
-                return;
-            }
+    	ret=vec_insert(&(nvectors[i]));
+    	if(ret!=0){
+            cout<<"Something went wrong with vec_insert"<<endl;
+            return;
         }
+        
 	}
 }
+
+int hypercube::Cluster_LRadius(vec* cvector,unsigned int qbits,double radius,int clust_num,vector<vector<dist_vec>> *curr_clust_vec,int iteration){
+
+    int M_count=0;
+    int probes_count=0;
+
+    for(int i=0;i<cube_vec[qbits].size();i++){
+        probes_count=1;
+        M_count++;
+        int clustered_flag=cube_vec[qbits][i]->clustered_flag;
+        if(clustered_flag==-1||clustered_flag==iteration)
+        {
+            if(metric=="euclidean_distance"){
+                long double dist= vect_dist(cvector->coord,cube_vec[qbits][i]->coord,d);
+                if(dist<radius){
+                    int push_flag=1;
+                    if(clustered_flag==iteration){
+                        push_flag=-1;
+                        int found=0;
+                        for(int ci=0;ci<clust_num;ci++){
+                            for(int vi=0;vi<(*curr_clust_vec)[ci].size();vi++){
+                                if((*curr_clust_vec)[ci][vi].vect==cube_vec[qbits][i]){
+                                    found=1;
+                                    if((*curr_clust_vec)[ci][vi].dist<=dist){
+                                        push_flag=0;
+                                    }else{
+                                        push_flag=1;
+                                        (*curr_clust_vec)[ci].erase((*curr_clust_vec)[ci].begin() + vi);
+                                    }
+                                    break;
+                                }
+                            }
+                            if(found)
+                                break;
+                        }
+                    }
+                    if(push_flag==1){
+                        cube_vec[qbits][i]->clustered_flag=iteration;
+                        (*curr_clust_vec)[clust_num].push_back(dist_vec(dist,cube_vec[qbits][i]));
+                    }
+                }
+            }
+            else{
+                cout<<"No function for metric:"<<metric<<endl;
+                return 1;
+            }
+            if (probes_count>=probes||M_count>=M)
+                break;
+        }
+
+    }
+
+
+    int temp=0;
+    if(probes_count<=probes && M_count<=M){
+
+        for(int hd=1;hd<k;++hd){
+
+            for(int ki=0;ki<powk;ki++){
+                temp++;
+                if(!cube_vec[ki].empty() && hammingDistance(ki,qbits)==hd){
+                    probes_count++;
+                    for(int i=0;i<cube_vec[ki].size();i++){
+                        M_count++;
+                        int clustered_flag=cube_vec[ki][i]->clustered_flag;
+                        if(clustered_flag==-1||clustered_flag==iteration){
+                            if(metric=="euclidean_distance"){
+                                long double dist=vect_dist(cvector->coord,cube_vec[ki][i]->coord,d);
+                                if(dist<radius){
+                                    int push_flag=1;
+                                    if(clustered_flag==iteration){
+                                        push_flag=-1;
+                                        int found=0;
+                                        for(int ci=0;ci<clust_num;ci++){
+                                            for(int vi=0; vi<(*curr_clust_vec)[ci].size();vi++){
+                                                if((*curr_clust_vec)[ci][vi].vect==cube_vec[ki][i]){
+                                                    found=1;
+                                                    if((*curr_clust_vec)[ci][vi].dist<=dist){
+                                                        push_flag=0;
+                                                    }else{
+                                                        push_flag=1;
+                                                        (*curr_clust_vec)[ci].erase((*curr_clust_vec)[ci].begin() + vi);
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                            if(found)
+                                                break;
+                                        }
+
+                                    }
+                                    if(push_flag==1){
+                                        cube_vec[ki][i]->clustered_flag=iteration;
+                                        (*curr_clust_vec)[clust_num].push_back(dist_vec(dist,cube_vec[ki][i]));
+                                        }
+                                    }
+                                }
+                                else{
+                                    cout<<"No function for metric:"<<metric<<endl;
+                                    return 1;
+                                }
+
+                        }
+                        if(M_count>=M)
+                            break;
+                    }
+                }
+                if(probes_count>=probes||M_count>=M)
+                    break;
+            }
+            if(probes_count>=probes||M_count>=M)
+                break;
+        }
+    }
+
+    return 0;
+
+}
+
+
+
+
+vector<vector<vec*>>* hypercube::ANN_cube(vec* nvect,vector<vec>* clustersvec,int no_of_vectors){
+    //ipologizoume to radi= mindist meta3i 2 cluster /2
+    int cluster_num=clustersvec->size();
+    long double mindist=999999999999999;
+
+    for (int ca = 0; ca < cluster_num-1; ++ca)
+        {
+        for (int cb = ca+1 ; cb <cluster_num;  ++cb)
+            {
+
+            long double dist=vect_dist(clustersvec->at(ca).coord,clustersvec->at(cb).coord,d);
+            if(dist<=mindist)
+                mindist==dist;
+            }
+        }
+
+    double radii=mindist/2;
+    unsigned int qbits[cluster_num];
+
+    for(int ci = 0; ci < cluster_num; ++ci){
+        qbits[ci]=this->hash_calc(&(clustersvec->at(ci)));
+    }
+
+    int iteration=0;
+    int total_found=0;
+
+    vector<vector<vec*>>* cluster_neighbours=new vector<vector<vec*>>;
+    cluster_neighbours->resize(clustersvec->size(),vector<vec*>(0));
+
+    vector<vector<dist_vec>> *curr_clust_vec=new vector<vector<dist_vec>>;
+    curr_clust_vec->resize(cluster_num,vector<dist_vec>());
+    int vectors_found=0;
+
+    do
+        {
+        //cout<<"ANNdowhile"<<endl;
+
+        for (int ci = 0; ci < cluster_num; ++ci)
+            {
+          //  cout<<"ANNfora"<<endl;
+
+            int abc=this->Cluster_LRadius(&(clustersvec->at(ci)),qbits[ci],radii,ci,curr_clust_vec,iteration);
+            }
+       // cout<<"ANN3.5"<<endl;
+        vectors_found=0;
+        for (int ci = 0; ci < cluster_num; ++ci)
+            {
+            //cout<<"ANNfor2"<<endl;
+            for (int vi = 0; vi < (*curr_clust_vec)[ci].size(); ++vi)
+                {
+                vectors_found++;
+                (*cluster_neighbours)[ci].push_back((*curr_clust_vec)[ci][vi].vect);
+                }
+
+            (*curr_clust_vec)[ci].clear();
+            }
+
+        total_found+=vectors_found;
+        iteration++;
+        radii*=2;
+        }
+    while(vectors_found>=cluster_num/2);
+
+    delete curr_clust_vec;
+    int ff=0;
+    cout<<"entering brute with total_found "<<total_found<<endl;
+    for(int i=0;i<no_of_vectors;i++){
+        if(nvect[i].clustered_flag==-1){
+            total_found++;
+            long double mdist;
+            int mci;
+            for(int ci=0;ci<cluster_num;ci++){
+                if(ci==0){
+                    mdist=vect_dist(clustersvec->at(ci).coord,nvect[i].coord,d);
+                    mci=0;
+                }
+                else{
+                    long double dist=vect_dist(clustersvec->at(ci).coord,nvect[i].coord,d);
+                    if(dist<mdist){
+                        mdist=dist;
+                        mci=ci;
+                    }
+                }
+            }
+            (*cluster_neighbours)[mci].push_back(&nvect[i]);
+
+        }
+        else{
+            ff++;
+            nvect[i].clustered_flag=-1;
+        }
+    }
+     cout<<"ff "<<ff<<endl;
+    cout<<"total_found "<<total_found<<endl;
+    return cluster_neighbours;
+}
+

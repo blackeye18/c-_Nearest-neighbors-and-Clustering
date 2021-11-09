@@ -210,15 +210,14 @@ long int g_function(int h[],vector<int> r,int k){
     return galmost;
 }
 
-int Lhashtables:: lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors,vector<int>* clustersvec){
+int Lhashtables:: lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors){
     int h_return;
     int h[this->k];
     int tablesize=no_of_vectors/BUCKET_RATIO;//apo diafaneies
     this->Lhtables[no_of_ht].hashtable_init(tablesize);
     long int g_notablesize;
     for(int i=0;i<no_of_vectors;i++){
-        auto it = find(clustersvec->begin(),clustersvec->end(), i);//elegxos gia an to sygkekrimeno dianisma einai cluster
-        if(it==clustersvec->end()){
+
             for(int ki=0;ki<this->k;ki++){
 
                 h_return=h_function(nvectors[i].coord,this->v[no_of_ht][ki],this->t[no_of_ht][ki]);
@@ -229,18 +228,18 @@ int Lhashtables:: lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors,vec
             g_notablesize=g_function(h,this->r[no_of_ht],this->k);
             //cout<<"Inserting to HT"<<endl;
             this->Lhtables[no_of_ht].hashtable_insert(&(nvectors[i]),g_notablesize);
-        }
+        
     }
     
 
     return 0;
 }
 
-int Lhashtables:: lsh_start(int no_of_vectors,vec *nvectors,vector<int>* clustersvec){
+int Lhashtables:: lsh_start(int no_of_vectors,vec *nvectors){
     this->Hashfun_init();
     int ret=0;
     for(int i=0;i<L;i++){
-        ret=this->lsh_continue(i,no_of_vectors,nvectors,clustersvec);
+        ret=this->lsh_continue(i,no_of_vectors,nvectors);
         if(ret!=0){
             cout<<"Something went wrong with lsh_continue"<<endl;
             return-1;
@@ -263,7 +262,7 @@ int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double ra
             nn++;
             if(currnode->vect!=NULL)
                 {
-                counter++;
+                
                 int clustered_flag=currnode->vect->clustered_flag;
                 if(clustered_flag==-1||clustered_flag==iteration)
                     {
@@ -276,6 +275,7 @@ int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double ra
                             int push_flag=1;
                             if(clustered_flag==iteration)
                                 {
+                                push_flag=-1;
                                 int found=0;
                                 for (int ci = 0; ci < clust_num; ++ci)
                                     {
@@ -289,7 +289,10 @@ int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double ra
                                                 push_flag=0;
                                                 }
                                             else
+                                                {
+                                                push_flag=1;
                                                 (*curr_clust_vec)[ci].erase((*curr_clust_vec)[ci].begin() + vi);
+                                                }
 
                                             break;
                                             }
@@ -298,11 +301,12 @@ int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double ra
                                     }
                                 }
 
-                            if(push_flag)
+                            if(push_flag==1)
                                 {
                                 currnode->vect->clustered_flag=iteration;
                                 (*curr_clust_vec)[clust_num].push_back(dist_vec(dist,currnode->vect));
                                 }
+
                             }
 
                         }
@@ -323,28 +327,24 @@ int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double ra
     return 0;
 
     }
-vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<int>* clustersvec,int no_of_vectors)
+vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<vec>* clustersvec,int no_of_vectors)
     {
     //ipologizoume to radi= mindist meta3i 2 cluster /2
     int cluster_num=clustersvec->size();
     long double mindist=999999999999999;
-    cout<<"ANN1"<<endl;
+
     for (int ca = 0; ca < cluster_num-1; ++ca)
         {
-        for (int cb = ca+1 ; cb <cluster_num;  cb++)
+        for (int cb = ca+1 ; cb <cluster_num;  ++cb)
             {
-            int clusta=clustersvec->at(ca);
-            int clustb=clustersvec->at(cb);
 
-            long double dist=vect_dist(nvect[clusta].coord,nvect[clustb].coord,d);
+            long double dist=vect_dist(clustersvec->at(ca).coord,clustersvec->at(cb).coord,d);
             if(dist<=mindist)
                 mindist==dist;
             }
         }
 
-    long double radii=mindist/2;
-
-    cout<<"ANN2"<<endl;
+    double radii=mindist/2;
     long int g_notablesize[cluster_num][this->L];
     int h_return;
     int h[cluster_num][k];
@@ -354,8 +354,8 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<int>* clustersvec,i
             {
             for(int ki=0;ki<this->k;ki++)
                 {
-                int clust=clustersvec->at(ci);
-                h_return=h_function(nvect[clust].coord,this->v[li][ki],this->t[li][ki]);
+
+                h_return=h_function(clustersvec->at(ci).coord,this->v[li][ki],this->t[li][ki]);
                 h[ci][ki]=h_return;
                 //cout<<"H Function Return:"<<h[ki]<<endl;
                 }
@@ -372,8 +372,8 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<int>* clustersvec,i
 
     vector<vector<dist_vec>> *curr_clust_vec=new vector<vector<dist_vec>>;
     curr_clust_vec->resize(cluster_num,vector<dist_vec>());
-    int vectors_found;
-    cout<<"ANN3"<<endl;
+    int vectors_found=0;
+
     do
         {
         //cout<<"ANNdowhile"<<endl;
@@ -381,9 +381,8 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<int>* clustersvec,i
         for (int ci = 0; ci < cluster_num; ++ci)
             {
           //  cout<<"ANNfora"<<endl;
-            int clust=clustersvec->at(ci);
 
-            int abc=this->Cluster_LRadius(&nvect[clust],g_notablesize[ci],radii,ci,curr_clust_vec,iteration);
+            int abc=this->Cluster_LRadius(&(clustersvec->at(ci)),g_notablesize[ci],radii,ci,curr_clust_vec,iteration);
             }
        // cout<<"ANN3.5"<<endl;
         vectors_found=0;
@@ -406,9 +405,7 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<int>* clustersvec,i
     while(vectors_found>=cluster_num/2);
 
     delete curr_clust_vec;
-    cout<<"ANN4"<<endl;
-    if(total_found<no_of_vectors-cluster_num)
-        {
+        int ff=0;
         cout<<"entering brute with total_found "<<total_found<<endl;
         for (int i = 0; i < no_of_vectors; ++i)
             {
@@ -419,15 +416,15 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<int>* clustersvec,i
                 int mci;
                 for (int ci = 0; ci < cluster_num; ++ci)
                     {
-                    int clust=clustersvec->at(ci);
+
                     if(ci==0)
                         {
-                        mdist=vect_dist(nvect[clust].coord,nvect[i].coord,d);
+                        mdist=vect_dist(clustersvec->at(ci).coord,nvect[i].coord,d);
                         mci=0;
                         }
                     else
                         {
-                        long double dist=vect_dist(nvect[clust].coord,nvect[i].coord,d);
+                        long double dist=vect_dist(clustersvec->at(ci).coord,nvect[i].coord,d);
                         if (dist<mdist)
                             {
                             mdist=dist;
@@ -437,10 +434,14 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<int>* clustersvec,i
                     }
                 (*cluster_neighbours)[mci].push_back(&nvect[i]);
                 }
-            if(total_found==no_of_vectors-cluster_num){break;}
+            else
+                {
+                ff++;
+                nvect[i].clustered_flag=-1;
+                }
             }
-
-        }
+     cout<<"ff "<<ff<<endl;
+    cout<<"total_found "<<total_found<<endl;
     return cluster_neighbours;
     }
 

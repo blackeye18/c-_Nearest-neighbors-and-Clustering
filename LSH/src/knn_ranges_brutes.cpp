@@ -79,11 +79,17 @@ vector<dist_vec>* brute_calculate(vec* qvector,vec* nvectors,int no_of_vectors,i
     
 }
 
-vector<vector<dist_vec>*>* brute_calculate_all(vec* qvectors,vec* nvectors,int no_of_vectors,int no_of_coordinates,int queries_no_of_vectors,int N){
+vector<vector<dist_vec>*>* brute_calculate_all(vec* qvectors,vec* nvectors,int no_of_vectors,int no_of_coordinates,int queries_no_of_vectors,int N,double* time_per_query_brute){
     vector<vector<dist_vec>*>* dsvec2;
     dsvec2=new vector<vector<dist_vec>*>;
     for(int i=0;i<queries_no_of_vectors;i++){
+        auto start1 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+
         dsvec2->push_back(brute_calculate(qvectors,nvectors,no_of_vectors,no_of_coordinates,N,i));
+        auto stop1 = high_resolution_clock::now();
+        auto duration1 = duration_cast<microseconds>(stop1 - start1);
+        double time1=((double)duration1.count()/1000000);
+        time_per_query_brute[i]+=time1;
     }
     return dsvec2;
 }
@@ -179,16 +185,22 @@ vector<dist_vec>* Lhashtables::NN_search(vec* nvector,int N)
 }
 
 
-vector<vector<dist_vec>*>* Lhashtables:: find_k_nearest(vec* qvectors,int N,int queries_no_of_vectors){
+vector<vector<dist_vec>*>* Lhashtables:: find_k_nearest(vec* qvectors,int N,int queries_no_of_vectors,double* time_per_query_lsh){
     vector<vector<dist_vec>*>* dsvec2;
     dsvec2=new vector<vector<dist_vec>*>;
 
     for(int i=0;i<queries_no_of_vectors;i++){
+        auto start1 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+
         vector<dist_vec>* temp=NN_search(&(qvectors[i]),N);
         if(temp==NULL){
             delete dsvec2;
             return NULL;
         }
+        auto stop1 = high_resolution_clock::now();
+        auto duration1 = duration_cast<microseconds>(stop1 - start1);
+        double time1=((double)duration1.count()/1000000);
+        time_per_query_lsh[i]+=time1;
         dsvec2->push_back(temp);
     }
     return dsvec2;

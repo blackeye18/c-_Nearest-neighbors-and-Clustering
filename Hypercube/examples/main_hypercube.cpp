@@ -61,11 +61,17 @@ int main(int argc, char *argv[]){
             cube->cube_start(no_of_vectors,nvectors);
             //->cube_map_print();
         }
-        vector<vector<dist_vec>*>* dsvec2;
-        dsvec2=cube->all_NN_search(qvectors,N,queries_no_of_vectors);
         auto stop1 = high_resolution_clock::now();
         auto duration1 = duration_cast<microseconds>(stop1 - start1);
         double time1=((double)duration1.count()/1000000);
+        time1=time1/no_of_vectors;
+        double time_per_query_cube[queries_no_of_vectors];
+        for(int i=0;i<queries_no_of_vectors;i++)//apothikevoume ton xrono poy xreiastike gia na dhmiourgithoun oi domes gia to cube
+            time_per_query_cube[i]=time1;
+        //cout<<"TIME CUBE:"<<time1<<endl;;
+        vector<vector<dist_vec>*>* dsvec2;
+        dsvec2=cube->all_NN_search(qvectors,N,queries_no_of_vectors,time_per_query_cube);
+        
         if(dsvec2==NULL){
             delete cube;
             delete [] nvectors;
@@ -76,18 +82,18 @@ int main(int argc, char *argv[]){
 
 
         cout<<"Now using brute calculation"<<endl;
-        auto start2 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+
+        double time_per_query_brute[queries_no_of_vectors];
+        for(int i=0;i<queries_no_of_vectors;i++)//arxikopoioume ton xrono me 0
+            time_per_query_brute[i]=0;
+
         vector<vector<dist_vec>*>* dsvec3;
-        dsvec3=brute_calculate_all(qvectors,nvectors,no_of_vectors,no_of_coordinates,queries_no_of_vectors,N);
-        auto stop2 = high_resolution_clock::now();
-        auto duration2 = duration_cast<microseconds>(stop2 - start2);
-        double time2=((double)duration2.count()/1000000);
-
-
+        dsvec3=brute_calculate_all(qvectors,nvectors,no_of_vectors,no_of_coordinates,queries_no_of_vectors,N,time_per_query_brute);
+       
         cout<<"Now using Radius Search"<<endl;
         vector<vector<dist_vec>*>* dsvec4;
         dsvec4=cube->all_RANGE_search(qvectors,R,queries_no_of_vectors);
-        print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time1,time2,dsvec3,dsvec4,R);
+        print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time_per_query_cube,time_per_query_brute,dsvec3,dsvec4,R);
 
         cout<<"Output File Created!!"<<endl;
         flag=repeat_handler(nvectors,qvectors,input_file,query_file,output_file,cube);//,lht
