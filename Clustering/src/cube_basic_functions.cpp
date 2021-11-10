@@ -324,7 +324,7 @@ vector<vector<vec*>>* hypercube::ANN_cube(vec* nvect,vector<vec>* clustersvec,in
 
     delete curr_clust_vec;
     int ff=0;
-    cout<<"entering brute with total_found "<<total_found<<endl;
+    //cout<<"entering brute with total_found "<<total_found<<endl;
     for(int i=0;i<no_of_vectors;i++){
         if(nvect[i].clustered_flag==-1){
             total_found++;
@@ -351,8 +351,8 @@ vector<vector<vec*>>* hypercube::ANN_cube(vec* nvect,vector<vec>* clustersvec,in
             nvect[i].clustered_flag=-1;
         }
     }
-     cout<<"ff "<<ff<<endl;
-    cout<<"total_found "<<total_found<<endl;
+    // cout<<"ff "<<ff<<endl;
+    //cout<<"total_found "<<total_found<<endl;
     return cluster_neighbours;
 }
 

@@ -407,7 +407,7 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<vec>* clustersvec,i
 
     delete curr_clust_vec;
         int ff=0;
-        cout<<"entering brute with total_found "<<total_found<<endl;
+       // cout<<"entering brute with total_found "<<total_found<<endl;
         for (int i = 0; i < no_of_vectors; ++i)
             {
             if(nvect[i].clustered_flag==-1)
@@ -441,8 +441,8 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<vec>* clustersvec,i
                 nvect[i].clustered_flag=-1;
                 }
             }
-     cout<<"ff "<<ff<<endl;
-    cout<<"total_found "<<total_found<<endl;
+     //cout<<"ff "<<ff<<endl;
+    //cout<<"total_found "<<total_found<<endl;
     return cluster_neighbours;
     }
 

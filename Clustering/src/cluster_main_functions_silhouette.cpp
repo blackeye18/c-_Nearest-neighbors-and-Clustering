@@ -209,7 +209,7 @@ vector<vector<vec*>>* cluster::repeat(vec* nvect,vector<vec>* clustersvec,int me
 			//cout<<clustersvec->at(ci).coord[ci]<<endl;
 			}
 			
-		diff=sum_diff/clustersvec->size();cout<<"diff "<<diff<<endl;
+		diff=sum_diff/clustersvec->size();//cout<<"diff "<<diff<<endl;
 		}
 	while(diff>=PERCISION && iteration<MAXIT);
 	return cluster_neighbours;

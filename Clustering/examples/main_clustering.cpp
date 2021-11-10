@@ -57,7 +57,7 @@ int main(int argc, char *argv[]){
     vector<vec>* clustersvec;
     clustersvec=clus.Kmeanplus(nvectors);
 
-
+/*
    cout<<endl<<clustersvec->size()<<endl;//afto prepei na fygei otan teleiwsoume
     for(int i=0; i<clustersvec->size();i++){
         //int temp=clustersvec->at(i);
@@ -65,32 +65,27 @@ int main(int argc, char *argv[]){
             cout<<(clustersvec->at(i)).coord.at(j)<<" ";
         cout<<endl;
     }
-
+*/
     vector<vector<vec*>>* cluster_neighbours;
 
     if( strcmp(method,"Classic")==0){
 
         cout<<"Now using Lloyds"<<endl;
-        //cluster_neighbours=clus.lloyds(nvectors,clustersvec);
-        cluster_neighbours=clus.repeat(nvectors,clustersvec,0,NULL);
+        cluster_neighbours=clus.repeat(nvectors,clustersvec,0,NULL);//0 gia lloyds
 
     }else if(strcmp(method,"LSH")==0){
         cout<<"Now using LSH"<<endl;
         lht=new Lhashtables(L,no_of_coordinates,k_lsh);
         lht->lsh_start(no_of_vectors,nvectors);
-
-        //EDW KALEIS THN ADISTOIXH LLOYDS GIA NA XWRISEIS TA VECTORS SE CLUSTERS dhladh thn range search
-        cluster_neighbours=clus.repeat(nvectors,clustersvec,1,(void*)lht);
+        cluster_neighbours=clus.repeat(nvectors,clustersvec,1,(void*)lht);//1 gia lht
 
     }else if(strcmp(method,"Hypercube")==0){
         cout<<"Now using Hypercube"<<endl;
         cube=new hypercube(M,probes,no_of_coordinates,k_hypercube,no_of_vectors);
         cube->cube_start(no_of_vectors,nvectors);
+        cluster_neighbours=clus.repeat(nvectors,clustersvec,2,(void*)cube);//2 gia cube
 
-        //EDW KALEIS THN ADISTOIXH LLOYDS GIA NA XWRISEIS TA VECTORS SE CLUSTERS dhladh thn range search
-        cluster_neighbours=clus.repeat(nvectors,clustersvec,2,(void*)cube);
-
-    }else {
+    }else {//failsafe 
         cout<<"Method: "<<method<<" Not defined :("<<endl;
         delete clustersvec;
         delete [] nvectors;
@@ -100,13 +95,14 @@ int main(int argc, char *argv[]){
     auto duration1 = duration_cast<microseconds>(stop1 - start1);
     double time1=((double)duration1.count()/1000000);
 
+/*
      cout<<"eftasa"<<endl;        
      int tempsum=0;
      for(int w=0;w<cluster_neighbours->size();w++){
         tempsum+=(*cluster_neighbours)[w].size();
         cout<<"clust "<<w<<" "<<(*cluster_neighbours)[w].size()<<endl;
      }
-     cout<<"sum "<<tempsum<<endl;
+     cout<<"sum "<<tempsum<<endl;*/
     vector<long double>* silhouette_vec=NULL ;
 
     cout<<"Now using silhouette"<<endl;
@@ -121,7 +117,7 @@ int main(int argc, char *argv[]){
 
     print_to_file(clustersvec,cluster_neighbours,complete_flag,output_file,method,no_of_coordinates,no_of_vectors,nvectors,time1,silhouette_vec);
 
-
+    cout<<"Output File Created!!"<<endl;
 
 
 
