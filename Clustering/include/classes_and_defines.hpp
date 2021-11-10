@@ -5,16 +5,18 @@
 #define PNUM 4294967291
 #define W 4//meta3i 0 kai 6
 #define BUCKET_RATIO 16
+#define PERCISION 0.01
+#define MAXIT 50
 const string metric = "euclidean_distance";
 
-
+//gia oti den yparxei sxolio yparxoun sta arxeia tou lsh kai tou hypercube
 
 class vec
 {
 public:
     string name;//to id ths grammhs-dianismatos
     vector <double> coord;
-    int clustered_flag;
+    int clustered_flag;//gia to radi search sto hypercube kai lsh, an exei hdh mpei se kapoio cluster kai se poio iteration
 };
 
 
@@ -63,6 +65,29 @@ class hashtable
         void hashtable_print();
         node* search_nd(long);
         ~hashtable(void);
+    };
+
+
+
+    class cluster
+    {
+    private:
+        int K_medians;//number_of_clusters
+        int L;//number_of_vector_hash_tables
+        int k_lsh;//number_of_vector_hash_functions
+        int M;//max_number_M_hypercube
+        int k_hypercube;//number_of_hypercube_dimensions
+        int probes;//number_of_probes
+        int no_of_vectors;
+        int no_of_coordinates;
+
+
+    public:
+        cluster(int,int,int);
+        vector<vec>* Kmeanplus(vec* nvect);
+        vector<vector<vec*>>* lloyds(vec* nvect,vector<vec>* clustersvec);
+        vector<vector<vec*>>* repeat(vec* nvect,vector<vec>* clustersvec,int method,void* ss);
+        vector<long double>* silhouette(vector<vector<vec*>>* cluster_neighbours,vector<vec>* clustersvec,vec* nvect);
     };
 
 
