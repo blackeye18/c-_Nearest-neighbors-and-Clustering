@@ -20,7 +20,7 @@ using namespace std::chrono;
 #include "cube_basic_functions.hpp"
 #include "knn_ranges_brutes.hpp"
 
-
+//gia oti den yparxoyn sxolia, yparxoun sto lsh
 int main(int argc, char *argv[]){
 	char input_file[256],query_file[256],output_file[256];
 	int k,M,probes,N;
@@ -33,23 +33,23 @@ int main(int argc, char *argv[]){
     hypercube *cube;
     string lsh_or_hypercube="distanceHypercube: ";	
 
-    if(input_handler(argc,argv,&k,&M,&probes,&N,&R,(input_file), query_file, output_file))
+    if(input_handler(argc,argv,&k,&M,&probes,&N,&R,(input_file), query_file, output_file))//check input opws kai sto lsh kai sto hypercube
         return -1;
 
     printf("input_file: %s, query_file: %s, output_file: %s,k:%d,M:%d,probes:%d,N:%d,R:%f\n",input_file,query_file,output_file,k,M,probes,N,R);
 
     int flag=0;
-    while(flag!=-1){
+    while(flag!=-1){//ta flag einai gia to repeat, einai eksigimena sthn lsh
 
         if(flag==0 || flag==1){
-            nvectors=open_and_create_vectors(input_file,&no_of_coordinates,&no_of_vectors);
+            nvectors=open_and_create_vectors(input_file,&no_of_coordinates,&no_of_vectors);//diavasma input
             if(nvectors==NULL)
                 return -1;
             printf("Input:: no_of_vectors: %d, no_of_coordinates: %d\n",no_of_vectors,no_of_coordinates);
         }
 
         if(flag==0 || flag==2){
-            qvectors=open_and_create_vectors(query_file,&queries_no_of_coordinates,&queries_no_of_vectors);  
+            qvectors=open_and_create_vectors(query_file,&queries_no_of_coordinates,&queries_no_of_vectors);  //diavasma query
             if(nvectors==NULL)
                 return -1;
             printf("Queries:: queries_no_of_vectors: %d, queries_no_of_coordinates: %d\n",queries_no_of_vectors,queries_no_of_coordinates);
@@ -57,8 +57,8 @@ int main(int argc, char *argv[]){
         cout<<"Now using hypercube and KNN"<<endl;
         auto start1 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
         if(flag==0 || flag==1){
-            cube=new hypercube(M,probes,no_of_coordinates,k,no_of_vectors);
-            cube->cube_start(no_of_vectors,nvectors);
+            cube=new hypercube(M,probes,no_of_coordinates,k,no_of_vectors);//arxikopoioume thn domh tou hypercube
+            cube->cube_start(no_of_vectors,nvectors);//insert ola ta vector sto cube
             //->cube_map_print();
         }
         auto stop1 = high_resolution_clock::now();
@@ -70,9 +70,9 @@ int main(int argc, char *argv[]){
             time_per_query_cube[i]=time1;
         //cout<<"TIME CUBE:"<<time1<<endl;;
         vector<vector<dist_vec>*>* dsvec2;
-        dsvec2=cube->all_NN_search(qvectors,N,queries_no_of_vectors,time_per_query_cube);
+        dsvec2=cube->all_NN_search(qvectors,N,queries_no_of_vectors,time_per_query_cube);//knn search gia ola ta query
         
-        if(dsvec2==NULL){
+        if(dsvec2==NULL){//failsafe
             delete cube;
             delete [] nvectors;
             delete [] qvectors;
@@ -88,17 +88,17 @@ int main(int argc, char *argv[]){
             time_per_query_brute[i]=0;
 
         vector<vector<dist_vec>*>* dsvec3;
-        dsvec3=brute_calculate_all(qvectors,nvectors,no_of_vectors,no_of_coordinates,queries_no_of_vectors,N,time_per_query_brute);
+        dsvec3=brute_calculate_all(qvectors,nvectors,no_of_vectors,no_of_coordinates,queries_no_of_vectors,N,time_per_query_brute);//idia me lsh
        
         cout<<"Now using Radius Search"<<endl;
         vector<vector<dist_vec>*>* dsvec4;
-        dsvec4=cube->all_RANGE_search(qvectors,R,queries_no_of_vectors);
-        print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time_per_query_cube,time_per_query_brute,dsvec3,dsvec4,R);
+        dsvec4=cube->all_RANGE_search(qvectors,R,queries_no_of_vectors);//range search alla me cube
+        print_to_file(output_file,lsh_or_hypercube,dsvec2,queries_no_of_vectors,qvectors,time_per_query_cube,time_per_query_brute,dsvec3,dsvec4,R);//
 
         cout<<"Output File Created!!"<<endl;
-        flag=repeat_handler(nvectors,qvectors,input_file,query_file,output_file,cube);//,lht
+        flag=repeat_handler(nvectors,qvectors,input_file,query_file,output_file,cube);//repeat handler idio me lsh
     	
-    	for(int i=0;i<queries_no_of_vectors;i++){
+    	for(int i=0;i<queries_no_of_vectors;i++){//freeing memory
 
         vector<dist_vec>* dstemp2 =(*dsvec2)[i];
         vector<dist_vec>* dstemp3 =(*dsvec3)[i];
