@@ -22,15 +22,15 @@ using namespace std::chrono;
 
 
 
-long double vect_dist(vector<double> vecA,vector<double> vecB,int d)
+long double vect_dist(vector<double> vecA,vector<double> vecB,int d)//ipologismos apostasis meta3i 2 vec
 	{
 	long int sum=0;
 	for (int i = 0; i < d; ++i)
 		{
-		long int temp=abs(vecA[i]-vecB[i]);
-		sum+=temp*temp;
+		long int temp=abs(vecA[i]-vecB[i]);//pernoume tin apoliti timi tis afairesis (apostasi panta >0)
+		sum+=temp*temp;//ta ipsonoume stin 2ara
 		}
-	return sqrt(sum);
+	return sqrt(sum);//tetragwniki riza typos sel 17 tou nnCluster.pdf
 	}
 
 vector<dist_vec>* hypercube::NN_search(vec* qvect,int N)
@@ -38,13 +38,13 @@ vector<dist_vec>* hypercube::NN_search(vec* qvect,int N)
     int M_count=0;
     int probes_count=0;
 
-    unsigned int qbits=this->hash_calc(qvect);
+    unsigned int qbits=this->hash_calc(qvect);//iologizume to bin hashvalue tou query  vec
 
-    priority_queue<dist_vec, vector<dist_vec>, pqcompare> Q;
+    priority_queue<dist_vec, vector<dist_vec>, pqcompare> Q;//priority queue
 
-    for (int i = 0; i < cube_vec[qbits].size(); ++i)
+    for (int i = 0; i < cube_vec[qbits].size(); ++i)//pigenume sto probe pu 8a pigene an to query vec itan sto sinolo twn seimeiwn mas diladi hamming distance 0
     	{
-    		//cout<<"Mphka"<<endl;
+
     	probes_count=1;
     	M_count++;
         if(metric=="euclidean_distance"){
@@ -58,19 +58,20 @@ vector<dist_vec>* hypercube::NN_search(vec* qvect,int N)
             break;
     	}
 
-    //cube_vec[qbits].clear();
+
     
-int temp=0;
+    int temp=0;
     if (probes_count<=probes && M_count<=M)
-    	{//cout<<"Mphka2"<<endl;
+    	{
 
-    	for (int hd = 1; hd < k; ++hd)
+    	for (int hd = 1; hd < k; ++hd)//elegxume probes me to analogo hammind distance
     		{
-    			//temp++;
-    		for (int ki = 0; ki <powk; ++ki)
-    			{temp++;
 
-    			if(!cube_vec[ki].empty() && hammingDistance(ki,qbits)==hd)
+    		for (int ki = 0; ki <powk; ++ki)//gia ola ta probes
+    			{
+                temp++;
+
+    			if(!cube_vec[ki].empty() && hammingDistance(ki,qbits)==hd)//elegxume oti to probe den ine adeio kai oti exei to analogo hamming distance
     				{
 
     				probes_count++;
@@ -79,7 +80,7 @@ int temp=0;
     					M_count++;
                         if(metric=="euclidean_distance"){
         				    long double dist= vect_dist(qvect->coord,cube_vec[ki][i]->coord,d);
-        				    Q.push(dist_vec(dist,cube_vec[ki][i]));
+        				    Q.push(dist_vec(dist,cube_vec[ki][i]));//to vazume sto priority queue
                         }else{
                             cout<<"No function for metric:"<<metric<<endl;
                             return NULL;
@@ -88,20 +89,19 @@ int temp=0;
             				break;
     					}
 
-            		//cube_vec[ki].clear();
+            		
     				}
-    			if (probes_count>=probes||M_count>=M)
+    			if (probes_count>=probes||M_count>=M)//an exume ftasei ton megisto aritmo probes kai M simeiwn stamatame
             		break;
     			}
     		if (probes_count>=probes||M_count>=M)
             	break;
     		}
     	}
-//cout<<"M_count"<<M_count<<"probes_count"<<probes<<endl;
-//cout<<"temp"<<temp<<endl;
-    vector<dist_vec>* dsvec=new vector<dist_vec>;//=new vector<dist_vec>;
-    //cout<<"alright4"<<endl;
-    for (int i = 0; i < N; ++i)
+
+    vector<dist_vec>* dsvec=new vector<dist_vec>;
+
+    for (int i = 0; i < N; ++i)//kratame tus N prwtous apto priority queu diladi tus N me tin mikroteri distance apto qvector
         {
         if(!Q.empty())
             {
@@ -123,7 +123,7 @@ vector<vector<dist_vec>*>* hypercube:: all_NN_search(vec* qvectors,int N,int que
 
     for(int i=0;i<queries_no_of_vectors;i++){
         auto start1 = high_resolution_clock::now();//https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
-        vector<dist_vec>* temp=NN_search(&(qvectors[i]),N);
+        vector<dist_vec>* temp=NN_search(&(qvectors[i]),N);//kaloume tin NN_search gia ka8e qvect
         if(temp==NULL){
             delete dsvec2;
             return NULL;
@@ -131,7 +131,7 @@ vector<vector<dist_vec>*>* hypercube:: all_NN_search(vec* qvectors,int N,int que
         auto stop1 = high_resolution_clock::now();
         auto duration1 = duration_cast<microseconds>(stop1 - start1);
         double time1=((double)duration1.count()/1000000);
-        //cout<<"TIme allnn:"<<time1<<" ";
+
         time_per_query_cube[i]+=time1;
         dsvec2->push_back(temp);
     }
@@ -150,7 +150,7 @@ vector<dist_vec>* hypercube::RANGE_search(vec* qvect,double R)
 
     for (int i = 0; i < cube_vec[qbits].size(); ++i)
         {
-            //cout<<"Mphka"<<endl;
+ 
         probes_count=1;
         M_count++;
         if(metric=="euclidean_distance"){
@@ -166,11 +166,11 @@ vector<dist_vec>* hypercube::RANGE_search(vec* qvect,double R)
             break;
         }
 
-    //cube_vec[qbits].clear();
+
     
 int temp=0;
     if (probes_count<=probes && M_count<=M)
-        {//cout<<"Mphka2"<<endl;
+        {
 
         for (int hd = 1; hd < k; ++hd)
             {
@@ -187,7 +187,7 @@ int temp=0;
                         M_count++;
                         if(metric=="euclidean_distance"){
                         long double dist= vect_dist(qvect->coord,cube_vec[ki][i]->coord,d);
-                        if(dist<R)
+                        if(dist<R)//an i apostasi ine mikroteri aptin aktina to vazume sto priority queue
                             Q.push(dist_vec(dist,cube_vec[ki][i]));
                         }else{
                             cout<<"No function for metric:"<<metric<<endl;
@@ -197,7 +197,6 @@ int temp=0;
                             break;
                         }
 
-                    //cube_vec[ki].clear();
                     }
                 if (probes_count>=probes||M_count>=M)
                     break;
@@ -206,10 +205,9 @@ int temp=0;
                 break;
             }
         }
-//cout<<"M_count"<<M_count<<"probes_count"<<probes<<endl;
-//cout<<"temp"<<temp<<endl;
-    vector<dist_vec>* dsvec=new vector<dist_vec>;//=new vector<dist_vec>;
-    //cout<<"alright4"<<endl;
+
+    vector<dist_vec>* dsvec=new vector<dist_vec>;
+
    
         while(!Q.empty())
             {
@@ -236,7 +234,7 @@ vector<vector<dist_vec>*>* hypercube:: all_RANGE_search(vec* qvectors,double R,i
     return dsvec2;
 }
 
-
+//sxolia iparxun stin lsh
 vector<dist_vec>* brute_calculate(vec* qvector,vec* nvectors,int no_of_vectors,int no_of_coordinates,int N,int pos){
     long double dist;
     priority_queue<dist_vec, vector<dist_vec>, pqcompare> Q;
@@ -248,7 +246,7 @@ vector<dist_vec>* brute_calculate(vec* qvector,vec* nvectors,int no_of_vectors,i
          cout<<"No function for metric:"<<metric<<endl;
          return NULL;
         }
-        //cout<<dist<<endl;
+
     }
 
      vector<dist_vec>* dsvec=new vector<dist_vec>;//=new vector<dist_vec>;

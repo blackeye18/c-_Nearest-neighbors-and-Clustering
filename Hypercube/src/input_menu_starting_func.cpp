@@ -19,7 +19,7 @@ using namespace std::chrono;
 #include "input_menu_starting_func.hpp"
 #include "cube_basic_functions.hpp"
 #include "knn_ranges_brutes.hpp"
-
+//sxolia gia tis pio katw entoles iparxun  stin lsh
 //elegxoume an to # twn arguments einai swsto
 int argsOK(int argc, char *argv[])
 {

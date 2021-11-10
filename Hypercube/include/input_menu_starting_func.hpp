@@ -1,6 +1,6 @@
 #ifndef __input_menu_starting_func__
 #define __input_menu_starting_func__
-
+//sxolia gia tis pio katw entoles iparxun stin lsh
 int argsOK(int argc, char *argv[]);
 int input_handler(int argc, char *argv[],int* k, int* M,int *probes ,int* N,double* R,char (&input_file)[256], char (&query_file)[256], char (&output_file)[256]);
 vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no_of_vectors);
