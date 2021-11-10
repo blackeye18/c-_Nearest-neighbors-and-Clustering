@@ -1,3 +1,4 @@
+/* Georgios Georgiou sdi1800220 - Panagiotis Mavrommatis sdi1800115 */
 #ifndef __classes_and_defines__
 #define __classes_and_defines__
 

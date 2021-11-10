@@ -1,3 +1,4 @@
+/* Georgios Georgiou sdi1800220 - Panagiotis Mavrommatis sdi1800115 */
 #ifndef __knn_ranges_brutes__
 #define __knn_ranges_brutes__
 
