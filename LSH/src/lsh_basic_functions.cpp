@@ -22,17 +22,17 @@ using namespace std::chrono;
 double normal_dist_generator(void)
     {
     std::random_device rd{};
-    std::mt19937 gen{rd()};
-    std::normal_distribution<float> d{0.0,1.0};
-    map<int, int> hist{};
+    std::mt19937 gen{rd()};//pseudo random genarator https://www.cplusplus.com/reference/random/mt19937/
+    //https://www.cplusplus.com/reference/random/normal_distribution/
+    std::normal_distribution<float> d{0.0,1.0};//kanoniki katanomi N~(0,1) sel 20 nnCluster.pdf
     return round(d(gen));
     }
 
-hashtable::hashtable()
+hashtable::hashtable()//contstructos twn hashtables 
     {
     initialized=0;
     }
-void hashtable::hashtable_init(int bnum)
+void hashtable::hashtable_init(int bnum)//synarthsh pou arxikopoiei ta hashtables
     {
     buckets=(node**) malloc(bnum*sizeof(node*));
     for(int i=0;i<bnum;i++)
@@ -42,15 +42,15 @@ void hashtable::hashtable_init(int bnum)
     initialized=1;
     }
 
-int hashtable:: hashtable_insert(vec* nvec, long hvalue)
+int hashtable:: hashtable_insert(vec* nvec, long hvalue)//synarthsh pou eisxwrei ena vector sto hashtable vash tou apotelesmatos ths synarthshs g
     {
     if(not initialized){return 1;}
     total_nodes++;
     int id=hvalue % bucket_count;
-    if (buckets[id]==NULL)
+    if (buckets[id]==NULL)//mia aplh eisxwrhsh se lista, eisxwrei sthn arxh
         {
         buckets[id]=new node;
-        buckets[id]->hashvalue=hvalue;
+        buckets[id]->hashvalue=hvalue;//apothikevoyme to hashvalue (id) gia na kanoume to trick pou anaferetai stis diafanies me to id sthn knn
         buckets[id]->id=id;
         buckets[id]->vect=nvec;
         buckets[id]->next=NULL;
@@ -68,7 +68,7 @@ int hashtable:: hashtable_insert(vec* nvec, long hvalue)
     }
 
 
-void hashtable::hashtable_print()
+void hashtable::hashtable_print()//voithitikh synarthsh pou xrhsimopoihsame gia debug, wste na gnwrizoume ti mpainei sta hashtables
     {
     cout<<"total_nodes of htable "<<total_nodes;
     int j=0;
@@ -89,7 +89,7 @@ void hashtable::hashtable_print()
                  
     }
 
-hashtable::~hashtable()
+hashtable::~hashtable()//destructos, apeleftherwsh mnhmhs
     {
     if(buckets!=NULL)
         {
@@ -110,11 +110,11 @@ hashtable::~hashtable()
     buckets=NULL;
     }
 
-Lhashtables:: ~Lhashtables(void){
+Lhashtables:: ~Lhashtables(void){//destructor gia thn domh Lhastables, apeleftherwsh mnhmhs
     delete[] Lhtables;
 }
 
-Lhashtables::Lhashtables(int lh,int di,int ki)
+Lhashtables::Lhashtables(int lh,int di,int ki)//synarthsh pou arxikopoiei ta dedomena vash twn orismatwn tou programmatos
  {
     Lhtables= new hashtable[lh];
     L=lh;
@@ -122,18 +122,18 @@ Lhashtables::Lhashtables(int lh,int di,int ki)
     k=ki;
 }
 
-void Lhashtables::Hashfun_init(void)        
+void Lhashtables::Hashfun_init(void)//synarthsh pou ypologizei tyxaia tis times pou xrisimopooioun oi synarthseis h kai epeita g
     {
-    v.resize(L,vector<vector<double> >(k,vector<double>(d)));
+    v.resize(L,vector<vector<double> >(k,vector<double>(d)));////resize analoga to plithws twn hashtables kai twn posws diastasewn einai to input file
 
-    t.resize(L,vector<double>(k));
+    t.resize(L,vector<double>(k));//resize analoga to plithws twn hashtables kai tou k(poses synarthseis H tha kalestoun)
 
     r.resize(L,vector<int>(k));
 
     unsigned seed=std::chrono::steady_clock::now().time_since_epoch().count();
     default_random_engine e(seed);
 
-    std::uniform_int_distribution<int>  distrR(-RLIMIT,RLIMIT);
+    std::uniform_int_distribution<int>  distrR(-RLIMIT,RLIMIT);//vazoume ena orio opws mas proteine o k Emiris sthn dialeksh
     std::uniform_real_distribution<double>  distrT(0.0,W);
 
 
@@ -155,28 +155,28 @@ void Lhashtables::Hashfun_init(void)
 }
 
 
-int h_function(vector<double> p,vector<double> v,double t){
+int h_function(vector<double> p,vector<double> v,double t){//ypologismos ths synarthshs h opws anaferetai stis diafanies
     double in_prod;
-    in_prod=inner_product(p.begin(),p.end(),v.begin(),0);
-    in_prod+=t;
-    double sum=in_prod/W;
-    int h=floor(sum);
+    in_prod=inner_product(p.begin(),p.end(),v.begin(),0);//vriskoume to ginomeno twn 2 vector(p kai v ) ta opoia einai idiwn diastasewn
+    in_prod+=t;//prosthetoume thn tyxaia timh t 
+    double sum=in_prod/W;//diairoume me w meta3i 0 kai 6, define sto header classes
+    int h=floor(sum);//pairnoume to katw orio tou apotelesmatos
     return h;
 
 }
 //https://stackoverflow.com/questions/11714555/euclidean-integer-modulo-in-c
-long int euclidean_remainder(long int a,long int b)
+long int euclidean_remainder(long int a,long int b)//ypologismos tou eyklidiou apolytou
 {
-  assert(b != 0);
+  assert(b != 0);//sigourevoume oti den kanoume diairesh me 0
   long int r = a % b;
-  return r >= 0 ? r : r + abs(b);
+  return r >= 0 ? r : r + abs(b);//an ypoloipo megalytero 0 epistrefoume to ypoloipo diaforetika epistrefoume to apolyto prosthetontas thn apolyth timh tou b
 }
 
-long int g_function(int h[],vector<int> r,int k){
+long int g_function(int h[],vector<int> r,int k){//synarthsh g opws afth anaferetai stis diafanies, xwris thn diairesh me to tablesize gia na to krathsoume ws id
     long int galmost=0;
     long int count_holder=0;
     for(int i=0;i<k;i++){
-        count_holder=0;
+        count_holder=0;//exoume spasei to mod opws proteinete stis diafanies gia apofygh overflow
         count_holder+=euclidean_remainder(r[i],PNUM);
         count_holder=count_holder*euclidean_remainder(h[i],PNUM);
         count_holder=euclidean_remainder(count_holder,PNUM);
@@ -186,30 +186,30 @@ long int g_function(int h[],vector<int> r,int k){
     return galmost;
 }
 
-int Lhashtables:: lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors){
+int Lhashtables:: lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors){//synarthsh pou eisxwrei ena vector se ena hashtable
     int h_return;
     int h[this->k];
     int tablesize=no_of_vectors/BUCKET_RATIO;//apo diafaneies
     this->Lhtables[no_of_ht].hashtable_init(tablesize);
     long int g_notablesize;
     for(int i=0;i<no_of_vectors;i++){
-        for(int ki=0;ki<this->k;ki++){
+        for(int ki=0;ki<this->k;ki++){//ypologizoume thn timh twn h, afto ginetai k fors
 
             h_return=h_function(nvectors[i].coord,this->v[no_of_ht][ki],this->t[no_of_ht][ki]);
             h[ki]=h_return;
             //cout<<"H Function Return:"<<h[ki]<<endl;
         }
         //cout<<"calling g function"<<endl;
-        g_notablesize=g_function(h,this->r[no_of_ht],this->k);
+        g_notablesize=g_function(h,this->r[no_of_ht],this->k);//ypologizoume thn timh tou g xwris to mod tablesize
         //cout<<"Inserting to HT"<<endl;
-        this->Lhtables[no_of_ht].hashtable_insert(&(nvectors[i]),g_notablesize);
+        this->Lhtables[no_of_ht].hashtable_insert(&(nvectors[i]),g_notablesize);//kanoume insert to vector sthn antistoixh thesh
     }
     
 
     return 0;
 }
 
-int Lhashtables:: lsh_start(int no_of_vectors,vec *nvectors){
+int Lhashtables:: lsh_start(int no_of_vectors,vec *nvectors){//synarthsh pou eisxwrei ola ta vectors se L hashtables 
     this->Hashfun_init();
     int ret=0;
     for(int i=0;i<L;i++){

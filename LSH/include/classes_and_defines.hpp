@@ -74,22 +74,22 @@ class hashtable//klash gia hashtable
         int k;//number of hash functions
         /*
         h(p)=floor((p*v+t)/w)
-        p=point
-        v=
+        typos apo diafanies
+
         */
         vector<vector<vector<double>>> v;
         vector<vector<double>> t;
         vector<vector<int>> r;
     public:
-        Lhashtables(int,int,int);
-        void Hashfun_init(void);
-        int lsh_start(int,vec*);
-        int lsh_continue(int,int,vec*);
-        vector<dist_vec>* NN_search(vec*,int);
-        vector<vector<dist_vec>*>* find_k_nearest(vec* ,int ,int ,double *);
-        vector<dist_vec>* LRadius_search(vec* ,double );
-        vector<vector<dist_vec>*>* find_in_LRadius(vec* ,double ,int );
-        ~Lhashtables(void);
+        Lhashtables(int,int,int);//synarthsh arxikopoihshs 
+        void Hashfun_init(void);//ypologismos uniform random twn timwn
+        int lsh_start(int,vec*);//synarthsh pou eisxwrei ola ta vectors se L hastables
+        int lsh_continue(int,int,vec*);//synarthsh poy eisxwrei ena vector se ena hashtable
+        vector<dist_vec>* NN_search(vec*,int);//Synarthsh poy vriskei tous N nearest neighbours gia ena query
+        vector<vector<dist_vec>*>* find_k_nearest(vec* ,int ,int ,double *);//vriskei tous kodinoterous geitones gia kathe query
+        vector<dist_vec>* LRadius_search(vec* ,double );//Synarthsh pou vriskei tou neigbours se ena query gia L aktina
+        vector<vector<dist_vec>*>* find_in_LRadius(vec* ,double ,int );//vriskei tous neighbours se ola ta query gia aktina L
+        ~Lhashtables(void);//destructor
 
     };
 
