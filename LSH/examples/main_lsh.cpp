@@ -1,3 +1,4 @@
+/* Georgios Georgiou sdi1800220 - Panagiotis Mavrommatis sdi1800115 */
 #include <iostream>
 #include <cstring>
 #include <vector>

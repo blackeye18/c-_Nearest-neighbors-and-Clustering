@@ -1,3 +1,4 @@
+/* Georgios Georgiou sdi1800220 - Panagiotis Mavrommatis sdi1800115 */
 #ifndef __lsh_basic_functions__
 #define __lsh_basic_functions__
 
