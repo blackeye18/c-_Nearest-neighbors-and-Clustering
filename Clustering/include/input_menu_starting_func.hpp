@@ -1,5 +1,6 @@
 #ifndef __input_menu_starting_func__
 #define __input_menu_starting_func__
+//gia oti den yparxei sxolio yparxoun sta arxeia tou lsh kai tou hypercube
 int argsOK(int argc, char *argv[]);
 int handle_conf_file(char configuration_file[256],int* K_medians,int*L,int*k_lsh,int*M,int*k_hypercube,int*probes);
 int input_handler(int argc, char *argv[],char (&input_file)[256], char (&configuration_file)[256], char (&output_file)[256],char (&method)[256],int* K_medians,int*L,int*k_lsh,int*M,int*k_hypercube,int*probes,int*complete_flag);

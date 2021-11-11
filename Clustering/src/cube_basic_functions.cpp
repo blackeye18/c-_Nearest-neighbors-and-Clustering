@@ -143,7 +143,7 @@ int hypercube::Cluster_LRadius(vec* cvector,unsigned int qbits,double radius,int
     int M_count=0;
     int probes_count=0;
 
-    for(int i=0;i<cube_vec[qbits].size();i++){
+    for(int i=0;i<cube_vec[qbits].size();i++){//gia ta simeia me idio bin hvalue hamming distance =0
         probes_count=1;
         M_count++;
         int clustered_flag=cube_vec[qbits][i]->clustered_flag;
@@ -158,13 +158,13 @@ int hypercube::Cluster_LRadius(vec* cvector,unsigned int qbits,double radius,int
                         int found=0;
                         for(int ci=0;ci<clust_num;ci++){
                             for(int vi=0;vi<(*curr_clust_vec)[ci].size();vi++){
-                                if((*curr_clust_vec)[ci][vi].vect==cube_vec[qbits][i]){
+                                if((*curr_clust_vec)[ci][vi].vect==cube_vec[qbits][i]){//elegxi an ine to idio simeio
                                     found=1;
-                                    if((*curr_clust_vec)[ci][vi].dist<=dist){
-                                        push_flag=0;
-                                    }else{
-                                        push_flag=1;
-                                        (*curr_clust_vec)[ci].erase((*curr_clust_vec)[ci].begin() + vi);
+                                    if((*curr_clust_vec)[ci][vi].dist<=dist){//elegxi an i apostasi sto allo cluster ine mikroteri apo to twrino
+                                        push_flag=0;//den tha to vali sto twrino
+                                    }else{//ean oxi
+                                        push_flag=1;//tha to valei sto twrino cluster
+                                        (*curr_clust_vec)[ci].erase((*curr_clust_vec)[ci].begin() + vi);//to diagrafei apto allo
                                     }
                                     break;
                                 }
@@ -193,7 +193,7 @@ int hypercube::Cluster_LRadius(vec* cvector,unsigned int qbits,double radius,int
     int temp=0;
     if(probes_count<=probes && M_count<=M){
 
-        for(int hd=1;hd<k;++hd){
+        for(int hd=1;hd<k;++hd){//gia oles  tis hamming distance 3ekinontas aptin 1
 
             for(int ki=0;ki<powk;ki++){
                 temp++;
@@ -278,7 +278,7 @@ vector<vector<vec*>>* hypercube::ANN_cube(vec* nvect,vector<vec>* clustersvec,in
     double radii=mindist/2;
     unsigned int qbits[cluster_num];
 
-    for(int ci = 0; ci < cluster_num; ++ci){
+    for(int ci = 0; ci < cluster_num; ++ci){//ipologizume ola ta binary hash values
         qbits[ci]=this->hash_calc(&(clustersvec->at(ci)));
     }
 
@@ -294,19 +294,19 @@ vector<vector<vec*>>* hypercube::ANN_cube(vec* nvect,vector<vec>* clustersvec,in
 
     do
         {
-        //cout<<"ANNdowhile"<<endl;
+
 
         for (int ci = 0; ci < cluster_num; ++ci)
             {
-          //  cout<<"ANNfora"<<endl;
+
 
             int abc=this->Cluster_LRadius(&(clustersvec->at(ci)),qbits[ci],radii,ci,curr_clust_vec,iteration);
             }
-       // cout<<"ANN3.5"<<endl;
+
         vectors_found=0;
         for (int ci = 0; ci < cluster_num; ++ci)
             {
-            //cout<<"ANNfor2"<<endl;
+    
             for (int vi = 0; vi < (*curr_clust_vec)[ci].size(); ++vi)
                 {
                 vectors_found++;
@@ -325,8 +325,9 @@ vector<vector<vec*>>* hypercube::ANN_cube(vec* nvect,vector<vec>* clustersvec,in
     delete curr_clust_vec;
     int ff=0;
     //cout<<"entering brute with total_found "<<total_found<<endl;
+    //brute force
     for(int i=0;i<no_of_vectors;i++){
-        if(nvect[i].clustered_flag==-1){
+        if(nvect[i].clustered_flag==-1){//osa den exun mpei se kapoio cluster
             total_found++;
             long double mdist;
             int mci;
@@ -346,7 +347,7 @@ vector<vector<vec*>>* hypercube::ANN_cube(vec* nvect,vector<vec>* clustersvec,in
             (*cluster_neighbours)[mci].push_back(&nvect[i]);
 
         }
-        else{
+        else{//vazume to flag =-1 gia to epomeno iteration
             ff++;
             nvect[i].clustered_flag=-1;
         }

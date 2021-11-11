@@ -4,10 +4,11 @@
 #define RLIMIT 1000
 #define PNUM 4294967291
 #define W 4//meta3i 0 kai 6
-#define BUCKET_RATIO 16
-#define PERCISION 0.01
+#define BUCKET_RATIO 8
+#define PERCISION 0.001
 #define MAXIT 50
 const string metric = "euclidean_distance";
+
 
 //gia oti den yparxei sxolio yparxoun sta arxeia tou lsh kai tou hypercube
 
@@ -106,8 +107,8 @@ class hashtable
         void Hashfun_init(void);
         int lsh_start(int no_of_vectors,vec *nvectors);
         int lsh_continue(int no_of_ht,int no_of_vectors, vec* nvectors);
-        int Cluster_LRadius(vec* cvector,long int g_notablesize[],double radius,int clust_num,vector<vector<dist_vec>> *curr_clust_vec,int iteration);
-        vector<vector<vec*>>* ANN_lsh(vec* nvect,vector<vec>* clustersvec,int no_of_vectors);
+        int Cluster_LRadius(vec* cvector,long int g_notablesize[],double radius,int clust_num,vector<vector<dist_vec>> *curr_clust_vec,int iteration);//vazei ta vec me tin apostasi tus apto cluster vec stin katalili thesi ston curr_clust_vec an i apostasi ine < radius
+        vector<vector<vec*>>* ANN_lsh(vec* nvect,vector<vec>* clustersvec,int no_of_vectors);//kalei tin Cluster_LRadius me diaforetika radius kai meta kanei brute calculate(lloyds) ola ta ipoloipa vec
         //vector<dist_vec>* NN_search(vec*,int);
         //vector<vector<dist_vec>*>* find_k_nearest(vec* ,int ,int );
        //vector<dist_vec>* LRadius_search(vec* ,double );
@@ -143,8 +144,8 @@ class hashtable
         unsigned int hash_calc(vec* vect);//returns the bin cube vector point
         int vec_insert(vec* vect);//inserts a vector to the multimap
         void cube_start(int ,vec*);
-        vector<vector<vec*>>* ANN_cube(vec* nvect,vector<vec>* clustersvec,int no_of_vectors);
-        int Cluster_LRadius(vec* cvector,unsigned int qbits,double radius,int clust_num,vector<vector<dist_vec>> *curr_clust_vec,int iteration);
+        vector<vector<vec*>>* ANN_cube(vec* nvect,vector<vec>* clustersvec,int no_of_vectors);//kalei tin Cluster_LRadius me diaforetika radius kai meta kanei brute calculate(lloyds) ola ta ipoloipa vec
+        int Cluster_LRadius(vec* cvector,unsigned int qbits,double radius,int clust_num,vector<vector<dist_vec>> *curr_clust_vec,int iteration);//vazei ta vec me tin apostasi tus apto cluster vec stin katalili thesi ston curr_clust_vec an i apostasi ine < radius
         //vector<vector<dist_vec>*>* all_NN_search(vec* ,int ,int );
         //vector<dist_vec>* NN_search(vec*,int);
         //vector<dist_vec>* RANGE_search(vec* ,double );

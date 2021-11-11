@@ -1,6 +1,6 @@
 #ifndef __lsh_basic_functions__
 #define __lsh_basic_functions__
-
+//gia oti den yparxei sxolio yparxoun sta arxeia tou lsh kai tou hypercube
 double normal_dist_generator(void);
 long double vect_dist(vector<double> vecA,vector<double> vecB,int d);
 //hashtable::hashtable();

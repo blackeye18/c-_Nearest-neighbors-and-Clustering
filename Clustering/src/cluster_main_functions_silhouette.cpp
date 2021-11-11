@@ -28,49 +28,49 @@ long double Mean_coord(vector<vec*> nvects,vec*  cvec,int d)
  	{
  	long double Avg_diff=0;
  	long double Sum_diff=0;
- 	for (int di = 0; di < d; ++di)
+ 	for (int di = 0; di < d; ++di)//gia oles tis diastaseis
  		{
  		double sum=0;
  		for (int ni = 0; ni < nvects.size(); ++ni)
  			{
- 			sum+=nvects[ni]->coord[di];
+ 			sum+=nvects[ni]->coord[di];//prosthetume ola ta seimeia tis antistixis diastasis
  			}
 
- 		double Avg=sum/nvects.size();
- 		Sum_diff+=abs(cvec->coord[di]-Avg);
- 		cvec->coord[di]=Avg;
+ 		double Avg=sum/nvects.size();//diairoume to sum me to sinolo twn simeiwn
+ 		Sum_diff+=abs(cvec->coord[di]-Avg);//vriskume to a8roisma tis apolitis diaforas proigumenou cluster apto neo
+ 		cvec->coord[di]=Avg;//vazume tin nea timi tu cluster stin antisixi diastasi
  		}
- 	Avg_diff=Sum_diff/d;
+ 	Avg_diff=Sum_diff/d;//vriskume to meso oro tis diaforas
  	return Avg_diff;
  	}
 
 
 
-cluster::cluster(int K_medians,int no_of_vectors,int no_of_coordinates)
+cluster::cluster(int K_medians,int no_of_vectors,int no_of_coordinates)//constructor of cluster class
 :K_medians(K_medians),no_of_vectors(no_of_vectors),no_of_coordinates(no_of_coordinates){};
 
-vector<vec>* cluster::Kmeanplus(vec* nvect)
+vector<vec>* cluster::Kmeanplus(vec* nvect)//kmeans ++ sel 45-46 nnCluster.pdf
     {
     unsigned seed=std::chrono::steady_clock::now().time_since_epoch().count();
     default_random_engine e(seed);
     std::uniform_int_distribution<int>  distrC(0,no_of_vectors-1);
 
-    //vector<int>* clusters=new vector<int>;
+
     int first_clust=distrC(e);
-    //nvect[first_clust].clustered_flag=-2;
+
     vector<vec>*clusters=new vector<vec>;
     clusters->resize(K_medians);
     int counter=0;
-    //vec* temp_vect=new vec[K_medians];
+
 
     for(int i=0;i<K_medians;i++)
-        (clusters->at(i)).coord.resize(no_of_coordinates);
+        (clusters->at(i)).coord.resize(no_of_coordinates);//arxikopoioume tis diastaseis tu pinaka me ta clusters 
 
-    (clusters->at(counter)).coord=nvect[first_clust].coord;
+    (clusters->at(counter)).coord=nvect[first_clust].coord;//pernume ena tixeo cluster me vazi tin uniform katanomi
 
-    counter++;
-    //clusters->push_back(first_clust);
-    vector<long double> partial_sums; 
+    counter++;//valame to prwto ara cluster count +1
+
+    vector<long double> partial_sums;
     vector<int> r;
 
     while(counter<K_medians)
@@ -80,27 +80,27 @@ vector<vec>* cluster::Kmeanplus(vec* nvect)
         long double sum=0;
         for (int i = 0; i < no_of_vectors; ++i)
             {
-            //auto it = find(clusters->begin(),clusters->end(), i);
+
             int tempflag=0;
-            for(int k=0;k<counter;k++){
-                if(nvect[i].coord==(clusters->at(counter)).coord)
+            for(int k=0;k<counter;k++){//elegxoume an ine idi to simeio cluster
+                if(nvect[i].coord==(clusters->at(k)).coord)
                     tempflag=1;
             }
-            if(tempflag==0)
+            if(tempflag==0)//an den ine idi cluster
                 {
                 long double mdist;
                 int mci;
-                for (int ci = 0; ci < counter; ++ci)
+                for (int ci = 0; ci < counter; ++ci)//vriskume elaxisti apostasi meta3i tu simeiou i kai enos kentroides
                     {
                     //int clust=clusters->at(ci);
                     if(ci==0)
                         {
-                        mdist=vect_dist((clusters->at(counter)).coord,nvect[i].coord,no_of_coordinates);
+                        mdist=vect_dist((clusters->at(ci)).coord,nvect[i].coord,no_of_coordinates);
                         mci=0;
                         }
                     else
                         {
-                        long double dist=vect_dist((clusters->at(counter)).coord,nvect[i].coord,no_of_coordinates);
+                        long double dist=vect_dist((clusters->at(ci)).coord,nvect[i].coord,no_of_coordinates);
                         if (dist<mdist)
                             {
                             mdist=dist;
@@ -113,33 +113,32 @@ vector<vec>* cluster::Kmeanplus(vec* nvect)
                 r.push_back(i);
                 }
             }
-        std::uniform_real_distribution<long double>  distrX(0,sum);
+        std::uniform_real_distribution<long double>  distrX(0,sum);//epilegume ena ari8mo me tin uniform katanomi meta3i 0 kai sum
         long double X=distrX(e);
-        int position=upper_bound(partial_sums.begin(), partial_sums.end(), X)-partial_sums.begin();
+        int position=upper_bound(partial_sums.begin(), partial_sums.end(), X)-partial_sums.begin();//xrisimopoiume tin etoimi sinartisi upper bound
         
         if(position>0)
-            if(partial_sums[position-1]>=X)
+            if(partial_sums[position-1]>=X)//epidi i sinartisi elegxi an o ari8mos pu 8a mas epistrepsi ine < tu X kai emis to thelume <=
                 position--;
-            //nvect[r[position]].clustered_flag=-2;
-        //clusters->push_back(r[position]);
-        (clusters->at(counter)).coord=nvect[r[position]].coord;
+  
+        (clusters->at(counter)).coord=nvect[r[position]].coord;//isagwgi tu neou kentroides
         counter++;
         }
     return clusters;
     }
 
 
-vector<vector<vec*>>* cluster::lloyds(vec* nvect,vector<vec>* clustersvec)
+vector<vector<vec*>>* cluster::lloyds(vec* nvect,vector<vec>* clustersvec)//sinartisi  gia algoritmo lloyds 1 epanalipsi
     {
     vector<vector<vec*>>* lloydsclust=new vector<vector<vec*>>;
     lloydsclust->resize(clustersvec->size(),vector<vec*>(0));
 
-    for (int i = 0; i < no_of_vectors; ++i)
+    for (int i = 0; i < no_of_vectors; ++i)//gia ola ta vec
         {
 
         long double mdist;
         int mci;
-        for (int ci = 0; ci < clustersvec->size(); ++ci)
+        for (int ci = 0; ci < clustersvec->size(); ++ci)//vriskume tin mikroteri apostasi se kentroides
             {
 
             if(ci==0)
@@ -157,12 +156,12 @@ vector<vector<vec*>>* cluster::lloyds(vec* nvect,vector<vec>* clustersvec)
                     }
                 }
             }
-        ((*lloydsclust)[mci]).push_back(&(nvect[i]));  
+        ((*lloydsclust)[mci]).push_back(&(nvect[i]));//isagume to vec sto kentroides me tin mikroteri apostasi
         }
     return lloydsclust;
     }
 
-vector<vector<vec*>>* cluster::repeat(vec* nvect,vector<vec>* clustersvec,int method,void* ss)
+vector<vector<vec*>>* cluster::repeat(vec* nvect,vector<vec>* clustersvec,int method,void* ss)//Algorithm (EM) sel 34 nnCluster.pdf
 	{
 	vector<vector<vec*>>* cluster_neighbours=NULL;
 	long double diff=0;
@@ -206,21 +205,20 @@ vector<vector<vec*>>* cluster::repeat(vec* nvect,vector<vec>* clustersvec,int me
 
 			sum_diff+=Mean_coord(cluster_neighbours->at(ci),&(clustersvec->at(ci)),no_of_coordinates);
 
-			//cout<<clustersvec->at(ci).coord[ci]<<endl;
 			}
 			
-		diff=sum_diff/clustersvec->size();//cout<<"diff "<<diff<<endl;
+		diff=sum_diff/clustersvec->size();//ipologizoume tin diafora
 		}
-	while(diff>=PERCISION && iteration<MAXIT);
+	while(diff>=PERCISION && iteration<MAXIT);//oso i diafora ine megaliteri tu percision kai den exume ftasei ton megisto ari8mo epanalipsewn
 	return cluster_neighbours;
 	}
 	
-vector<long double>* cluster::silhouette(vector<vector<vec*>>* cluster_neighbours,vector<vec>* clustersvec,vec* nvect)
+vector<long double>* cluster::silhouette(vector<vector<vec*>>* cluster_neighbours,vector<vec>* clustersvec,vec* nvect) //sel 53-54 nnCluster.pdf
     {
     vector<long double>* S=new vector<long double>;
 
 
-    for (int ci = 0; ci < cluster_neighbours->size(); ++ci)
+    for (int ci = 0; ci < cluster_neighbours->size(); ++ci)//gia ola ta clusters
         {
          long double sumSi=0;
         int cluster_size=(*cluster_neighbours)[ci].size();
@@ -236,13 +234,13 @@ vector<long double>* cluster::silhouette(vector<vector<vec*>>* cluster_neighbour
                 if(ni!=vi)
                     {
                     long double dist;
-                    if(vi<ni)
+                    if(vi<ni)//ean to vi< n1 den exume 3anaipologisei tin apostasi 
                         {
                         dist=vect_dist((*cluster_neighbours)[ci][vi]->coord,(*cluster_neighbours)[ci][ni]->coord,no_of_coordinates);
-                        prev_dist[vi][ni]=dist;
+                        prev_dist[vi][ni]=dist;//apo8ikevume tin apostasi gia mellontiki xrisi
                         }
                     else
-                        dist=prev_dist[ni][vi];
+                        dist=prev_dist[ni][vi];//tin exume ipologisei idi
 
                     sumA+=dist;
                     }
@@ -252,14 +250,14 @@ vector<long double>* cluster::silhouette(vector<vector<vec*>>* cluster_neighbour
             //ipologizoume to 2o pio kontino cluster
             long double nextbestclust_dist;
             int nextbestclust_ci;
-            //cout<<"ok2"<<endl;
+
             for (int nci = 0; nci < cluster_neighbours->size(); ++nci)
                 {
                 if(nci!=ci)
                     {
-                    //int clust=clustersvec->at(nci);
 
-                    if(nci==0||(ci==0 && nci==1))
+
+                    if(nci==0||(ci==0 && nci==1))//gia tin arxiki apostasi
                         {
                         nextbestclust_dist=vect_dist(clustersvec->at(nci).coord,(*cluster_neighbours)[ci][vi]->coord,no_of_coordinates);
                         nextbestclust_ci=nci;
@@ -275,23 +273,23 @@ vector<long double>* cluster::silhouette(vector<vector<vec*>>* cluster_neighbour
                         }
                     }
                 }
-            //cout<<"ok3"<<endl;
+
             //ipologizoume to b(i)
             long double sumB=0;
 
             int Bcluster_size=(*cluster_neighbours)[nextbestclust_ci].size();
 
-            //cout<<"ok4"<<endl;
+
             for (int nbvi = 0; nbvi <Bcluster_size ; ++nbvi)//ipologizoume to  B(i)
                 {
 
                 long double dist=vect_dist((*cluster_neighbours)[ci][vi]->coord,(*cluster_neighbours)[nextbestclust_ci][nbvi]->coord,no_of_coordinates);
                 sumB+=dist;
                 }
-            //cout<<"ok5"<<endl;
+
             long double Avgb=sumB/Bcluster_size;
 
-            long double si=(Avgb-Avga)/max(Avga,Avgb);//cout<<"si"<<si<<endl;
+            long double si=(Avgb-Avga)/max(Avga,Avgb);
             sumSi+=si;
             }
         long double AvgSi=sumSi/cluster_size;

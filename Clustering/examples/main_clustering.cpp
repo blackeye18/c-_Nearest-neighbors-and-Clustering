@@ -22,7 +22,7 @@ using namespace std::chrono;
 #include "lsh_basic_functions.hpp"
 #include "cube_basic_functions.hpp"
 #include "cluster_main_functions_silhouette.hpp"
-//#include "knn_ranges_brutes.hpp"
+
 
 
 
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
     double time1=((double)duration1.count()/1000000);
 
 /*
-     cout<<"eftasa"<<endl;        
+       
      int tempsum=0;
      for(int w=0;w<cluster_neighbours->size();w++){
         tempsum+=(*cluster_neighbours)[w].size();

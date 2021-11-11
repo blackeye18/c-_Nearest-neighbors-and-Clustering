@@ -14,7 +14,7 @@
 
 
 
-
+//gia oti den yparxei sxolio yparxoun sta arxeia tou lsh kai tou hypercube
 using namespace std;
 using namespace std::chrono;
 
@@ -254,9 +254,9 @@ int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double ra
     {
     int counter=0;
 
-    for (int li = 0; li < L; li++)
+    for (int li = 0; li < L; li++)//gia  ola ta hashtables
         {
-        node* currnode=Lhtables[li].search_nd(g_notablesize[li]);
+        node* currnode=Lhtables[li].search_nd(g_notablesize[li]);//pernume to antistoixo node
         int nn=0;
         while(currnode!=NULL)
             {
@@ -265,7 +265,7 @@ int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double ra
                 {
                 
                 int clustered_flag=currnode->vect->clustered_flag;
-                if(clustered_flag==-1||clustered_flag==iteration)
+                if(clustered_flag==-1||clustered_flag==iteration)//ean den mpike 3ana se cluster i exi mpi se allo cluster se auto to iteration
                     {
                     if(metric=="euclidean_distance")
                         {
@@ -274,7 +274,7 @@ int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double ra
                         if(dist<radius)
                             {
                             int push_flag=1;
-                            if(clustered_flag==iteration)
+                            if(clustered_flag==iteration)//ean ine se allo cluster
                                 {
                                 push_flag=-1;
                                 int found=0;
@@ -282,17 +282,17 @@ int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double ra
                                     {
                                     for (int vi = 0; vi < (*curr_clust_vec)[ci].size(); ++vi)
                                         {
-                                        if((*curr_clust_vec)[ci][vi].vect==currnode->vect)
+                                        if((*curr_clust_vec)[ci][vi].vect==currnode->vect)//vriskume pu ine
                                             {
                                             found=1;
-                                            if((*curr_clust_vec)[ci][vi].dist<=dist)
+                                            if((*curr_clust_vec)[ci][vi].dist<=dist)//elegxume ean exi  mikroteri apostasi sto allo cluster
                                                 {
-                                                push_flag=0;
+                                                push_flag=0;//tote den tha to valume sto twrino cluster
                                                 }
                                             else
                                                 {
-                                                push_flag=1;
-                                                (*curr_clust_vec)[ci].erase((*curr_clust_vec)[ci].begin() + vi);
+                                                push_flag=1;//tha to valume sto twrino cluster
+                                                (*curr_clust_vec)[ci].erase((*curr_clust_vec)[ci].begin() + vi);//to svinume apto allo cluster
                                                 }
 
                                             break;
@@ -302,7 +302,7 @@ int Lhashtables::Cluster_LRadius(vec* cvector,long int g_notablesize[],double ra
                                     }
                                 }
 
-                            if(push_flag==1)
+                            if(push_flag==1)//to vazume sto twrino cluster
                                 {
                                 currnode->vect->clustered_flag=iteration;
                                 (*curr_clust_vec)[clust_num].push_back(dist_vec(dist,currnode->vect));
@@ -349,7 +349,7 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<vec>* clustersvec,i
     long int g_notablesize[cluster_num][this->L];
     int h_return;
     int h[cluster_num][k];
-    for (int ci = 0; ci < cluster_num; ++ci)
+    for (int ci = 0; ci < cluster_num; ++ci)//ipologizume ola ta hashvalues
         {
         for (int li = 0; li < L; li++)
             {
@@ -358,9 +358,9 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<vec>* clustersvec,i
 
                 h_return=h_function(clustersvec->at(ci).coord,this->v[li][ki],this->t[li][ki]);
                 h[ci][ki]=h_return;
-                //cout<<"H Function Return:"<<h[ki]<<endl;
+              
                 }
-            //cout<<"calling g function"<<endl;
+       
             g_notablesize[ci][li]=g_function(h[ci],this->r[li],this->k);
             }
         }
@@ -368,54 +368,55 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<vec>* clustersvec,i
     int iteration=0;
     int total_found=0;
 
-    vector<vector<vec*>>* cluster_neighbours=new vector<vector<vec*>>;
+    vector<vector<vec*>>* cluster_neighbours=new vector<vector<vec*>>;//pinakas me ola ta vec ana cluster
     cluster_neighbours->resize(clustersvec->size(),vector<vec*>(0));
 
-    vector<vector<dist_vec>> *curr_clust_vec=new vector<vector<dist_vec>>;
+    vector<vector<dist_vec>> *curr_clust_vec=new vector<vector<dist_vec>>;//pinakas gia ka8e iteration pu krataei kai distance
     curr_clust_vec->resize(cluster_num,vector<dist_vec>());
     int vectors_found=0;
 
     do
         {
-        //cout<<"ANNdowhile"<<endl;
 
-        for (int ci = 0; ci < cluster_num; ++ci)
+
+        for (int ci = 0; ci < cluster_num; ++ci)//kaloume tin Cluster_LRadius gia ka8e cluster
             {
-          //  cout<<"ANNfora"<<endl;
+
 
             int abc=this->Cluster_LRadius(&(clustersvec->at(ci)),g_notablesize[ci],radii,ci,curr_clust_vec,iteration);
             }
-       // cout<<"ANN3.5"<<endl;
+
         vectors_found=0;
         for (int ci = 0; ci < cluster_num; ++ci)
             {
-            //cout<<"ANNfor2"<<endl;
+
             for (int vi = 0; vi < (*curr_clust_vec)[ci].size(); ++vi)
                 {
                 vectors_found++;
-                (*cluster_neighbours)[ci].push_back((*curr_clust_vec)[ci][vi].vect);
+                (*cluster_neighbours)[ci].push_back((*curr_clust_vec)[ci][vi].vect);//vazume ta vec ston pinaka me ola ta vec ana cluster
                 }
 
-            (*curr_clust_vec)[ci].clear();
+            (*curr_clust_vec)[ci].clear();//ka8arizoume ton proswrino pinaka 
             }
 
         total_found+=vectors_found;
         iteration++;
-        radii*=2;
+        radii*=2;//diplasiazume to radii
         }
     while(vectors_found>=cluster_num/2);
 
     delete curr_clust_vec;
         int ff=0;
        // cout<<"entering brute with total_found "<<total_found<<endl;
+        //brute calculate
         for (int i = 0; i < no_of_vectors; ++i)
             {
-            if(nvect[i].clustered_flag==-1)
+            if(nvect[i].clustered_flag==-1)//ean den exi mpei se kapio cluster
                 {
                 total_found++;
                 long double mdist;
                 int mci;
-                for (int ci = 0; ci < cluster_num; ++ci)
+                for (int ci = 0; ci < cluster_num; ++ci)//to vazume ston cluster pu exi tin mikroteri apostasi
                     {
 
                     if(ci==0)
@@ -435,13 +436,13 @@ vector<vector<vec*>>* Lhashtables::ANN_lsh(vec* nvect,vector<vec>* clustersvec,i
                     }
                 (*cluster_neighbours)[mci].push_back(&nvect[i]);
                 }
-            else
+            else//ean exei mpei vazume to flag=-1 gia tin epomeni epanalipsi
                 {
                 ff++;
                 nvect[i].clustered_flag=-1;
                 }
             }
-     //cout<<"ff "<<ff<<endl;
+     //cout<<"how much lsh really found "<<ff<<endl;
     //cout<<"total_found "<<total_found<<endl;
     return cluster_neighbours;
     }

@@ -1,7 +1,7 @@
 #ifndef __cluster_main_functions_silhouette__
 #define __cluster_main_functions_silhouette__
 
-long double Mean_coord(vector<vec*> nvects,vec*  cvec,int d);
+long double Mean_coord(vector<vec*> nvects,vec*  cvec,int d);//ipologizei to neo cluster vriskontas to meso simeio tu sinolu twn simeiwn kai epistrefi se long double tin apoliti diafora neou cluster apto palio 
 //cluster::cluster(int K_medians,int no_of_vectors,int no_of_coordinates)
 //:K_medians(K_medians),no_of_vectors(no_of_vectors),no_of_coordinates(no_of_coordinates){};
 
