@@ -36,10 +36,10 @@ int argsOK(int argc, char *argv[])
     }
     return 0;
 }
-
+//synarthsh pou diavazei to conf file 
 int handle_conf_file(char configuration_file[256],int* K_medians,int*L,int*k_lsh,int*M,int*k_hypercube,int*probes){
 	ifstream conf;
-    conf.open(configuration_file);
+    conf.open(configuration_file);//ama den yparxei
     if(!conf){
         cout<<"Something Terrible Happened! Maybe the input_file doesn't exist?! Exiting.."<<endl;
         return 1;
@@ -48,27 +48,27 @@ int handle_conf_file(char configuration_file[256],int* K_medians,int*L,int*k_lsh
     string sline;
     string tok;
 //default values:
-    (*L)=3;
+    (*L)=3;//vazoume default times 
     (*k_lsh)=4;
     (*M)=10;
     (*k_hypercube)=3;
     (*probes)=2;
     int count=0;
-     while (getline(conf,sline))
+     while (getline(conf,sline))//diavazoume kathe grammh
     {	count++;
     	stringstream line(sline);
     	string temp1,temp2;
-    	line>> tok;
+    	line>> tok;//thn spame analoga me ta kena
     	temp1=tok;
     	line>> tok;
     	temp2=tok;
 
     	if(count>6){
-    		cout<<"Something went wrong with configuration_file... Exiting.."<<endl;
+    		cout<<"Something went wrong with configuration_file... Exiting.."<<endl;//ama einai parapanw apo tis megistes grammes, kati paei lathos
     		return 1;
     	}
     	//cout<<"temp1: "<<temp1;
-    	if(temp1=="number_of_clusters:")
+    	if(temp1=="number_of_clusters:")//kai kanoyme tis analoges allages
     		(*K_medians)=atoi(temp2.c_str());
     	else if(temp1=="number_of_vector_hash_tables:")
     		(*L)=atoi(temp2.c_str());
@@ -96,7 +96,7 @@ int input_handler(int argc, char *argv[],char (&input_file)[256], char (&configu
 		cout<<"You entered something wrong.. Exiting"<<endl;
 		return 1;
 	}
-	if(argc==10){
+	if(argc==10){//ama exoun dothei ola ta orismata apo grammh edolwn
 	
 		strcpy(input_file,argv[2]);
 		strcpy(configuration_file,argv[4]);
@@ -112,7 +112,7 @@ int input_handler(int argc, char *argv[],char (&input_file)[256], char (&configu
         if(handle_conf_file(configuration_file,K_medians,L,k_lsh,M,k_hypercube,probes))
             return 1;
 
-	}else{
+	}else{//ama exoun dothei mono ta vasika orismata apo grammh edolwn
 		strcpy(input_file,argv[2]);
 		strcpy(configuration_file,argv[4]);
 		strcpy(output_file,argv[6]);
@@ -184,7 +184,7 @@ vec* open_and_create_vectors(char input_file[256],int* no_of_coordinates,int *no
     return nvectors;
             
 }
-
+//print to file 
 void print_to_file(vector<vec>* clustersvec,vector<vector<vec*>>* cluster_neighbours,int complete_flag,char output_file[256],char method[256],int no_of_coordinates,int no_of_vectors,vec* nvectors,double time1, vector<long double>* silhouette_vec){
 
     ofstream outfile;
@@ -199,7 +199,7 @@ void print_to_file(vector<vec>* clustersvec,vector<vector<vec*>>* cluster_neighb
     for(int i=0;i<clustersvec->size();i++){
         outfile<<"CLUSTER-"<<i+1<<" {size: "<<(*cluster_neighbours)[i].size()<<", centroid: ";
         for(int j=0;j<no_of_coordinates;j++){
-            outfile<<nvectors[i].coord[j]<<" ";
+            outfile<<clustersvec->at(i).coord[j]<<" ";
         }
         outfile<<"}"<<endl;
     }
@@ -218,16 +218,17 @@ void print_to_file(vector<vec>* clustersvec,vector<vector<vec*>>* cluster_neighb
         outfile<<sum<<"]";
     }
     if(complete_flag==1){
+        outfile<<endl;
         for(int i=0;i<clustersvec->size();i++){
         outfile<<"CLUSTER-"<<i+1<<" {size: "<<(*cluster_neighbours)[i].size()<<", centroid: ";
         for(int j=0;j<no_of_coordinates;j++){
-            outfile<<nvectors[i].coord[j]<<" ";
+            outfile<<clustersvec->at(i).coord[j]<<" ";
         }
         //outfile<<",";
        for(int k=0;k<(*cluster_neighbours)[i].size();k++){
         outfile<<", "<<((*cluster_neighbours)[i])[k]->name;
         }
-       outfile<<"}";
+       outfile<<"}"<<endl;
         } 
     }   
     return;
