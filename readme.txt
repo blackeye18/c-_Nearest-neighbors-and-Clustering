@@ -34,3 +34,8 @@ GitHub Link: https://github.com/blackeye18/c-_Nearest-neighbors-and-Clustering
 ./cluster -i input_small_id -c cluster.conf -o out -complete -m LSH
 ./cluster -i input_small_id -c cluster.conf -o out -m LSH
 
+
+
+
+
+
